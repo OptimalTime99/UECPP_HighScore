@@ -13,4 +13,6 @@ class HIGHSCORE_API AHighScoreGameMode : public AGameMode
 {
 	GENERATED_BODY()
 	
+public:
+	AHighScoreGameMode();
 };
