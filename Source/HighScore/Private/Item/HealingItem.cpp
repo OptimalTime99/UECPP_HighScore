@@ -2,7 +2,7 @@
 
 
 #include "Item/HealingItem.h"
-#include "HighScoreCharacter.h"
+#include "Character/HighScoreCharacter.h"
 
 AHealingItem::AHealingItem()
 {

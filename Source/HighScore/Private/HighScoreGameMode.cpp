@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
 #include "HighScoreGameMode.h"
-#include "HighScoreCharacter.h"
-#include "HighScorePlayerController.h"
+#include "Character/HighScoreCharacter.h"
+#include "Character/HighScorePlayerController.h"
 
 AHighScoreGameMode::AHighScoreGameMode()
 {

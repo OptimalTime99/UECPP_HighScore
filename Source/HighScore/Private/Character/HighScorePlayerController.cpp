@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
 
 
-#include "HighScorePlayerController.h"
+#include "Character/HighScorePlayerController.h"
 #include "EnhancedInputSubsystems.h" // Enhanced Input System의 Local Player Subsystem을 사용하기 위해 포함
 
 AHighScorePlayerController::AHighScorePlayerController()

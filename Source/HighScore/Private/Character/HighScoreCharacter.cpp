@@ -1,8 +1,8 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
 
-#include "HighScoreCharacter.h"
+#include "Character/HighScoreCharacter.h"
 #include "EnhancedInputComponent.h"
-#include "HighScorePlayerController.h"
+#include "Character/HighScorePlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
