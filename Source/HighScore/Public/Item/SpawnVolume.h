@@ -17,9 +17,8 @@ class HIGHSCORE_API ASpawnVolume : public AActor
 public:	
     ASpawnVolume();
 
-protected:
     UFUNCTION(Category = "Spawning", BlueprintCallable)
-    void SpawnRandomItem();
+    AActor* SpawnRandomItem();
 
     // 스폰 볼륨 내부에서 무작위 좌표를 얻어오는 함수
     UFUNCTION(Category = "Spawning", BlueprintCallable)
@@ -27,7 +26,7 @@ protected:
 
     // 특정 아이템 클래스를 스폰하는 함수
     UFUNCTION(Category = "Spawning", BlueprintCallable)
-    void SpawnItem(TSubclassOf<AActor> ItemClass);
+    AActor* SpawnItem(TSubclassOf<AActor> ItemClass);
 
     FItemSpawnRow* GetRandomItem() const;
 

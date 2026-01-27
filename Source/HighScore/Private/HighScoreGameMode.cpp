@@ -2,7 +2,7 @@
 #include "HighScoreGameMode.h"
 #include "Character/HighScoreCharacter.h"
 #include "Character/HighScorePlayerController.h"
-#include "HighScoreGameStateBase.h"
+#include "HighScoreGameState.h"
 
 AHighScoreGameMode::AHighScoreGameMode()
 {
@@ -10,5 +10,5 @@ AHighScoreGameMode::AHighScoreGameMode()
 	
 	PlayerControllerClass = AHighScorePlayerController::StaticClass();
 
-	GameStateClass = AHighScoreGameStateBase::StaticClass();
+	GameStateClass = AHighScoreGameState::StaticClass();
 }
