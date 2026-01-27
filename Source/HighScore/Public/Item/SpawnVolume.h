@@ -17,7 +17,6 @@ class HIGHSCORE_API ASpawnVolume : public AActor
 public:	
     ASpawnVolume();
 
-protected:
     UFUNCTION(Category = "Spawning", BlueprintCallable)
     AActor* SpawnRandomItem();
 
