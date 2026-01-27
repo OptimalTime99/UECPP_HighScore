@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/Actor.h"
 
 
 AHighScoreCharacter::AHighScoreCharacter()
@@ -30,7 +31,9 @@ AHighScoreCharacter::AHighScoreCharacter()
     CameraComp->bUsePawnControlRotation = false;
     CameraComp->SetRelativeRotation(FRotator(-25.0f, 0.0f, 0.0f));
 
-
+    // 초기 체력 설정
+    MaxHealth = 100.0f;
+    Health = MaxHealth;
 }
 
 void AHighScoreCharacter::BeginPlay()
@@ -191,5 +194,51 @@ void AHighScoreCharacter::StopSprint(const FInputActionValue& value)
     {
         GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
     }
+}
+
+// 현재 체력을 가져오는 함수
+int32 AHighScoreCharacter::GetHealth() const
+{
+    return Health;
+}
+
+// 체력 회복 함수
+void AHighScoreCharacter::AddHealth(float Amount)
+{
+    // 체력을 회복시킴. 최대 체력을 초과하지 않도록 제한함
+    Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
+    UE_LOG(LogTemp, Log, TEXT("Health increased to: %f"), Health);
+}
+
+// 데미지 처리 함수
+float AHighScoreCharacter::TakeDamage(
+    float DamageAmount,
+    FDamageEvent const& DamageEvent,
+    AController* EventInstigator,
+    AActor* DamageCauser)
+{
+    // 기본 데미지 처리 로직 호출 (필수는 아님)
+    float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+    // 체력을 데미지만큼 감소시키고, 0 이하로 떨어지지 않도록 Clamp
+    Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
+    UE_LOG(LogTemp, Warning, TEXT("Health decreased to: %f"), Health);
+
+    // 체력이 0 이하가 되면 사망 처리
+    if (Health <= 0.0f)
+    {
+        OnDeath();
+    }
+
+    // 실제 적용된 데미지를 반환
+    return ActualDamage;
+}
+
+// 사망 처리 함수
+void AHighScoreCharacter::OnDeath()
+{
+    UE_LOG(LogTemp, Error, TEXT("Character is Dead!"));
+
+    // 사망 후 로직
 }
 

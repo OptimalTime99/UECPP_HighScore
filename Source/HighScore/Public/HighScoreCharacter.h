@@ -20,6 +20,14 @@ class HIGHSCORE_API AHighScoreCharacter : public ACharacter
 public:
     AHighScoreCharacter();
 
+    // 현재 체력을 가져오는 함수
+    UFUNCTION(Category = "Health", BlueprintPure)
+    int32 GetHealth() const;
+
+    // 체력을 회복시키는 함수
+    UFUNCTION(Category = "Health", BlueprintCallable)
+    void AddHealth(float Amount);
+
 protected:
 #pragma region override
     virtual void BeginPlay() override;
@@ -44,6 +52,14 @@ protected:
     void StopSprint(const FInputActionValue& value);
 #pragma endregion
 
+    // 사망 처리 함수 (체력이 0 이하가 되었을 때 호출)
+    UFUNCTION(BlueprintCallable, Category = "Health")
+    virtual void OnDeath();
+
+    // 데미지 처리 함수 - 외부로부터 데미지를 받을 때 호출됨
+    // 또는 AActor의 TakeDamage()를 오버라이드
+    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 private:
     void Initialize();
 
@@ -64,6 +80,15 @@ private:
     float SprintSpeedMultiplier;  // "기본 속도" 대비 몇 배로 빠르게 달릴지 결정
     UPROPERTY(Category = "Movement", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     float SprintSpeed; // 실제 스프린트 속도
+#pragma endregion
+
+#pragma region ability
+    // 최대 체력
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta = (AllowPrivateAccess = "true"))
+    float MaxHealth;
+    // 현재 체력
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Health", meta = (AllowPrivateAccess = "true"))
+    float Health;
 #pragma endregion
 
 };
