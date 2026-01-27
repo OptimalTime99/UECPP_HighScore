@@ -12,16 +12,18 @@ struct FItemSpawnRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-private:
+public:
+    // SpawnVolume과 상속관계가 아니므로 가져다 사용하려면 public에 있어야 함.
+
     // 아이템 이름
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FName ItemName;
 
     // 어떤 아이템 클래스를 스폰할지
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSubclassOf<AActor> ItemClass;
 
     // 이 아이템의 스폰 확률
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float SpawnChance;
 };
