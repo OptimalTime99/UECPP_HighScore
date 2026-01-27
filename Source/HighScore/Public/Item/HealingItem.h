@@ -14,9 +14,10 @@ class HIGHSCORE_API AHealingItem : public ABaseItem
 public:
     AHealingItem();
 
+protected:
     virtual void ActivateItem(AActor* Activator) override;
 
 private:
     UPROPERTY(Category = "Item", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    float HealAmount;
+    int32 HealAmount;
 };

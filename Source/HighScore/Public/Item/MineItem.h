@@ -15,6 +15,9 @@ class HIGHSCORE_API AMineItem : public ABaseItem
 public:
     AMineItem();
 
+    void Explode();
+
+protected:
     virtual void ActivateItem(AActor* Activator) override;
     
 private:
@@ -26,6 +29,14 @@ private:
     float ExplosionRadius;
     // 폭발 데미지
     UPROPERTY(Category = "Mine", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    float ExplosionDamage;
+    int ExplosionDamage;
+
+    UPROPERTY(Category = "Item|Component", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<USphereComponent> ExplosionCollision;
+
+    // 지뢰 발동 여부
+    FTimerHandle ExplosionTimerHandle;
+
+    
 
 };
