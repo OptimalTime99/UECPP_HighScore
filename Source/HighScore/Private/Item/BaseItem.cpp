@@ -3,6 +3,8 @@
 
 #include "Item/BaseItem.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 ABaseItem::ABaseItem()
@@ -66,6 +68,46 @@ void ABaseItem::OnItemEndOverlap(
 // 아이템이 사용(Activate)되었을 때 동작
 void ABaseItem::ActivateItem(AActor* Activator)
 {
+	UParticleSystemComponent* Particle = nullptr;
+
+	if (PickupParticle)
+	{
+		Particle = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			PickupParticle,
+			GetActorLocation(),
+			GetActorRotation(),
+			true
+		);
+	}
+
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			PickupSound,
+			GetActorLocation()
+		);
+	}
+
+	if (Particle)
+	{
+		FTimerHandle DestroyParticleTimerHandle;
+		TWeakObjectPtr<UParticleSystemComponent> WeakParticle = Particle;
+
+		GetWorld()->GetTimerManager().SetTimer(
+			DestroyParticleTimerHandle,
+			[WeakParticle]()
+			{
+				if (WeakParticle.IsValid())
+				{
+					WeakParticle->DestroyComponent();
+				}
+			},
+			2.0f,
+			false
+		);
+	}
 }
 
 // 아이템 유형을 반환

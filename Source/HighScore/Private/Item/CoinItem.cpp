@@ -12,6 +12,8 @@ ACoinItem::ACoinItem()
 
 void ACoinItem::ActivateItem(AActor* Activator)
 {
+    Super::ActivateItem(Activator); 
+
     // 플레이어 태그 확인
     if (Activator && Activator->ActorHasTag("Player"))
     {
