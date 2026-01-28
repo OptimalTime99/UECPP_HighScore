@@ -79,12 +79,15 @@ void ABaseItem::ActivateItem(AActor* Activator)
 			GetActorRotation(),
 			true
 		);
-
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Particle Spawned!"));
 	}
-	else
+
+	if (PickupSound)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("PickupParticle is NULL!"));
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			PickupSound,
+			GetActorLocation()
+		);
 	}
 
 	if (Particle)

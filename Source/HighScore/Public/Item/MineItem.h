@@ -42,6 +42,9 @@ private:
     UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UParticleSystem> ExplosionParticle;
 
+    UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<USoundBase> ExplosionSound;
+
     
 
     

@@ -63,6 +63,9 @@ private:
     UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UParticleSystem> PickupParticle;
 
+    UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<USoundBase> PickupSound;
+
 
 
 };
