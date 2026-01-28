@@ -8,7 +8,9 @@
 #include "HighScoreGameInstance.h"
 #include "Character/HighScorePlayerController.h"
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 #include "Blueprint/UserWidget.h"
+#include "Character/HighScoreCharacter.h"
 
 AHighScoreGameState::AHighScoreGameState()
 {
@@ -162,10 +164,44 @@ void AHighScoreGameState::UpdateHUD()
 		{
 			if (UUserWidget* HUDWidget = HighScorePlayerController->GetHUDWidget())
 			{
+				AHighScoreCharacter* MyCharacter = Cast<AHighScoreCharacter>(PlayerController->GetPawn());
+
+				if (MyCharacter) // 캐릭터가 살아있을 때만 갱신
+				{
+					if (UTextBlock* HPText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HP"))))
+					{
+						HPText->SetText(FText::FromString(FString::Printf(TEXT("%d"), (int32)MyCharacter->GetHealth())));
+					}
+
+					if (UProgressBar* HPBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("PB_HP"))))
+					{
+						float MaxHealth = 100.0f;
+
+						if (MaxHealth > 0.0f)
+						{
+							float HPRatio = MyCharacter->GetHealth() / MaxHealth;
+							HPBar->SetPercent(HPRatio);
+						}
+					}
+				}
+
 				if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
 				{
 					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
-					TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), RemainingTime)));
+					TimeText->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), RemainingTime)));
+				}
+
+				if (UProgressBar* TimeProgressBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("PB_Time"))))
+				{
+					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+
+					// [중요] 0.0(0%) ~ 1.0(100%) 사이의 값으로 만들어야 합니다.
+					// LevelDuration이 0이면 나누기 에러가 나므로 안전장치 추가
+					if (LevelDuration > 0.f)
+					{
+						float Percent = RemainingTime / LevelDuration;
+						TimeProgressBar->SetPercent(Percent); // 게이지 설정 함수
+					}
 				}
 
 				if (UTextBlock* ScoreText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Score"))))
@@ -175,14 +211,14 @@ void AHighScoreGameState::UpdateHUD()
 						UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(GameInstance);
 						if (HighScoreGameInstance)
 						{
-							ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), HighScoreGameInstance->TotalScore)));
+							ScoreText->SetText(FText::FromString(FString::Printf(TEXT("SCORE: %d"), HighScoreGameInstance->TotalScore)));
 						}
 					}
 				}
 
-				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
+				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Stage"))))
 				{
-					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("STAGE %d"), CurrentLevelIndex + 1)));
 				}
 			}
 		}
