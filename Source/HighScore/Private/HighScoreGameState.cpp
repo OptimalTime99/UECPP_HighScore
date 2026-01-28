@@ -229,6 +229,7 @@ void AHighScoreGameState::OnGameOver()
 	{
 		if (AHighScorePlayerController* HighScorePlayerController = Cast<AHighScorePlayerController>(PlayerController))
 		{
+			HighScorePlayerController->SetPause(true);
 			HighScorePlayerController->ShowMainMenu(true);
 		}
 	}

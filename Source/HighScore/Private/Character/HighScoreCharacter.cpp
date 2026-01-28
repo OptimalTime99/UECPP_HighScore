@@ -1,13 +1,14 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
 
 #include "Character/HighScoreCharacter.h"
-#include "EnhancedInputComponent.h"
 #include "Character/HighScorePlayerController.h"
+#include "HighScoreGameState.h"
+#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/Actor.h"
-#include "HighScoreGameState.h"
+#include "Components/WidgetComponent.h"
+#include "Components/TextBlock.h"
 
 
 AHighScoreCharacter::AHighScoreCharacter()
@@ -32,6 +33,16 @@ AHighScoreCharacter::AHighScoreCharacter()
     CameraComp->bUsePawnControlRotation = false;
     CameraComp->SetRelativeRotation(FRotator(-25.0f, 0.0f, 0.0f));
 
+    OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
+    OverheadWidget->SetupAttachment(GetMesh());
+    OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
+    NormalSpeed = 600.0f;
+    SprintSpeedMultiplier = 1.5f;
+    SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
+
+    GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+
     // 초기 체력 설정
     MaxHealth = 100.0f;
     Health = MaxHealth;
@@ -40,17 +51,7 @@ AHighScoreCharacter::AHighScoreCharacter()
 void AHighScoreCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
-    Initialize();
-}
-
-void AHighScoreCharacter::Initialize()
-{
-    NormalSpeed = 600.0f;
-    SprintSpeedMultiplier = 1.5f;
-    SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
-
-    GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+    UpdateOverheadHP();
 }
 
 void AHighScoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -208,6 +209,7 @@ void AHighScoreCharacter::AddHealth(float Amount)
 {
     // 체력을 회복시킴. 최대 체력을 초과하지 않도록 제한함
     Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
+    UpdateOverheadHP();
 }
 
 // 데미지 처리 함수
@@ -222,6 +224,7 @@ float AHighScoreCharacter::TakeDamage(
 
     // 체력을 데미지만큼 감소시키고, 0 이하로 떨어지지 않도록 Clamp
     Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
+    UpdateOverheadHP();
 
     // 체력이 0 이하가 되면 사망 처리
     if (Health <= 0.0f)
@@ -241,6 +244,19 @@ void AHighScoreCharacter::OnDeath()
     if (HighScoreGameState)
     {
         HighScoreGameState->OnGameOver();
+    }
+}
+
+void AHighScoreCharacter::UpdateOverheadHP()
+{
+    if (!OverheadWidget) return;
+
+    UUserWidget* OverheadWidgetInstance = OverheadWidget->GetUserWidgetObject();
+    if (!OverheadWidgetInstance) return;
+
+    if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverHeadHP"))))
+    {
+        HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
     }
 }
 
