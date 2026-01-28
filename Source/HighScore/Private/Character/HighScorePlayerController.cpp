@@ -3,6 +3,7 @@
 
 #include "Character/HighScorePlayerController.h"
 #include "EnhancedInputSubsystems.h" // Enhanced Input System의 Local Player Subsystem을 사용하기 위해 포함
+#include "Blueprint/UserWidget.h"
 
 AHighScorePlayerController::AHighScorePlayerController()
     : InputMappingContext(nullptr),
@@ -27,6 +28,16 @@ void AHighScorePlayerController::BeginPlay()
                 // 우선순위(Priority)는 0이 가장 높은 우선순위
                 Subsystem->AddMappingContext(InputMappingContext, 0);
             }
+        }
+    }
+
+    // HUD 위젯 생성 및 표시
+    if (HUDWidgetClass)
+    {
+        UUserWidget* HUDWidget = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidget)
+        {
+            HUDWidget->AddToViewport();
         }
     }
 }
