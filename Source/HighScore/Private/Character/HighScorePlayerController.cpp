@@ -128,6 +128,25 @@ void AHighScorePlayerController::ShowMainMenu(bool bIsRestart)
 				ButtonText->SetText(FText::FromString(TEXT("Start")));
 			}
 		}
+
+		if (bIsRestart)
+		{
+			UFunction* PlayAnimFunc = MainMenuWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
+			if (PlayAnimFunc)
+			{
+				MainMenuWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
+			}
+
+			if (UTextBlock* TotalScoreText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName("TotalScoreText")))
+			{
+				if (UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
+				{
+					TotalScoreText->SetText(FText::FromString(
+						FString::Printf(TEXT("Total Score: %d"), HighScoreGameInstance->TotalScore)
+					));
+				}
+			}
+		}
 	}
 }
 
@@ -140,4 +159,5 @@ void AHighScorePlayerController::StartGame()
 	}
 
 	UGameplayStatics::OpenLevel(GetWorld(), FName("L_Basic"));
+	SetPause(false);
 }
