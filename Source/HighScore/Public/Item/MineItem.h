@@ -35,7 +35,14 @@ private:
     TObjectPtr<USphereComponent> ExplosionCollision;
 
     // 지뢰 발동 여부
+    bool bHasExploded;
     FTimerHandle ExplosionTimerHandle;
+
+
+    UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UParticleSystem> ExplosionParticle;
+
+    
 
     
 

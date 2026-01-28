@@ -60,4 +60,9 @@ private:
     UPROPERTY(Category = "Item|Component", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<UStaticMeshComponent> StaticMesh;
 
+    UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UParticleSystem> PickupParticle;
+
+
+
 };
