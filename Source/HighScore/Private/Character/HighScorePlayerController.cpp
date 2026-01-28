@@ -4,13 +4,18 @@
 #include "Character/HighScorePlayerController.h"
 #include "EnhancedInputSubsystems.h" // Enhanced Input System의 Local Player Subsystem을 사용하기 위해 포함
 #include "Blueprint/UserWidget.h"
+#include "HighScoreGameState.h"
 
 AHighScorePlayerController::AHighScorePlayerController()
     : InputMappingContext(nullptr),
     MoveAction(nullptr),
     JumpAction(nullptr),
     LookAction(nullptr),
-    SprintAction(nullptr) {}
+    SprintAction(nullptr),
+    HUDWidgetClass(nullptr),
+    HUDWidgetInstance(nullptr) 
+{
+}
 
 void AHighScorePlayerController::BeginPlay()
 {
@@ -34,10 +39,21 @@ void AHighScorePlayerController::BeginPlay()
     // HUD 위젯 생성 및 표시
     if (HUDWidgetClass)
     {
-        UUserWidget* HUDWidget = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-        if (HUDWidget)
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
         {
-            HUDWidget->AddToViewport();
+            HUDWidgetInstance->AddToViewport();
         }
     }
+
+    AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
+    if (HighScoreGameState)
+    {
+        HighScoreGameState->UpdateHUD();
+    }
+}
+
+UUserWidget* AHighScorePlayerController::GetHUDWidget() const
+{
+    return HUDWidgetInstance;
 }

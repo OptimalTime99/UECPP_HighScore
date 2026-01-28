@@ -59,7 +59,7 @@ void AHighScoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
     // Enhanced InputComponent로 캐스팅
     if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
-        // IA를 가져오기 위해 현재 소유 중인 Controller를 ASpartaPlayerController로 캐스팅
+        // IA를 가져오기 위해 현재 소유 중인 Controller를 AHighScorePlayerController로 캐스팅
         if (AHighScorePlayerController* PlayerController = Cast<AHighScorePlayerController>(GetController()))
         {
             if (PlayerController->MoveAction)

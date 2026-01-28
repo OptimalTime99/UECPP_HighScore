@@ -6,6 +6,9 @@
 #include "Item/SpawnVolume.h"
 #include "Item/CoinItem.h"
 #include "HighScoreGameInstance.h"
+#include "Character/HighScorePlayerController.h"
+#include "Components/TextBlock.h"
+#include "Blueprint/UserWidget.h"
 
 AHighScoreGameState::AHighScoreGameState()
 {
@@ -21,8 +24,19 @@ void AHighScoreGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
+	UpdateHUD();
+
 	// 게임 시작 시 첫 레벨부터 진행
 	StartLevel();
+
+	GetWorldTimerManager().SetTimer(
+		HUDUpdateTimerHandle,
+		this,
+		&AHighScoreGameState::UpdateHUD,
+		0.1f,
+		true
+	);
 }
 
 int32 AHighScoreGameState::GetScore() const
@@ -86,6 +100,8 @@ void AHighScoreGameState::StartLevel()
 		false
 	);
 
+	UpdateHUD();
+
 	UE_LOG(LogTemp, Warning, TEXT("Level %d Start!, Spawned %d coin"),
 		CurrentLevelIndex + 1,
 		SpawnedCoinCount);
@@ -138,8 +154,44 @@ void AHighScoreGameState::EndLevel()
 	}
 }
 
+void AHighScoreGameState::UpdateHUD()
+{
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		AHighScorePlayerController* HighScorePlayerController = Cast<AHighScorePlayerController>(PlayerController);
+		{
+			if (UUserWidget* HUDWidget = HighScorePlayerController->GetHUDWidget())
+			{
+				if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
+				{
+					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+					TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), RemainingTime)));
+				}
+
+				if (UTextBlock* ScoreText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Score"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(GameInstance);
+						if (HighScoreGameInstance)
+						{
+							ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), HighScoreGameInstance->TotalScore)));
+						}
+					}
+				}
+
+				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
+				{
+					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+				}
+			}
+		}
+	}
+}
+
 void AHighScoreGameState::OnGameOver()
 {
+	UpdateHUD();
 	UE_LOG(LogTemp, Warning, TEXT("Game Over!!"));
 	// 여기서 UI를 띄운다거나, 재시작 기능을 넣을 수도 있음
 }

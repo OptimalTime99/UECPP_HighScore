@@ -42,10 +42,16 @@ public:
     TObjectPtr<UInputAction> SprintAction;
 #pragma endregion
 
-#pragma region UI
+#pragma region HUD
     // UMG 위젯 클래스를 에디터에서 할당받을 변수
-    UPROPERTY(Category = "UI", EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(Category = "HUD", EditAnywhere, BlueprintReadWrite)
     TSubclassOf<UUserWidget> HUDWidgetClass;
+
+    UPROPERTY(Category = "HUD", VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UUserWidget> HUDWidgetInstance;
+
+    UFUNCTION(Category = "HUD", BlueprintPure)
+    UUserWidget* GetHUDWidget() const;
 #pragma endregion
 
 protected:
