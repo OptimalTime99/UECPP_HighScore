@@ -5,6 +5,9 @@
 #include "EnhancedInputSubsystems.h" // Enhanced Input System의 Local Player Subsystem을 사용하기 위해 포함
 #include "Blueprint/UserWidget.h"
 #include "HighScoreGameState.h"
+#include "HighScoreGameInstance.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/TextBlock.h"
 
 AHighScorePlayerController::AHighScorePlayerController()
     : InputMappingContext(nullptr),
@@ -13,7 +16,9 @@ AHighScorePlayerController::AHighScorePlayerController()
     LookAction(nullptr),
     SprintAction(nullptr),
     HUDWidgetClass(nullptr),
-    HUDWidgetInstance(nullptr) 
+    HUDWidgetInstance(nullptr),
+    MainMenuWidgetClass(nullptr),
+    MainMenuWidgetInstance(nullptr)
 {
 }
 
@@ -36,24 +41,103 @@ void AHighScorePlayerController::BeginPlay()
         }
     }
 
-    // HUD 위젯 생성 및 표시
-    if (HUDWidgetClass)
+    // 게임 실행 시 메뉴 레벨에서 메뉴 UI 먼저 표시
+    FString CurrentMapName = GetWorld()->GetMapName();
+    if (CurrentMapName.Contains("L_MenuLevel"))
     {
-        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-        if (HUDWidgetInstance)
-        {
-            HUDWidgetInstance->AddToViewport();
-        }
-    }
-
-    AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
-    if (HighScoreGameState)
-    {
-        HighScoreGameState->UpdateHUD();
+        ShowMainMenu(false);
     }
 }
 
 UUserWidget* AHighScorePlayerController::GetHUDWidget() const
 {
     return HUDWidgetInstance;
+}
+
+void AHighScorePlayerController::ShowGameHUD()
+{
+	// HUD가 켜져 있다면 닫기
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+
+	// 이미 메뉴가 떠 있으면 제거
+	if (MainMenuWidgetInstance)
+	{
+		MainMenuWidgetInstance->RemoveFromParent();
+		MainMenuWidgetInstance = nullptr;
+	}
+
+	if (HUDWidgetClass)
+	{
+		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->AddToViewport();
+
+			bShowMouseCursor = false;
+			SetInputMode(FInputModeGameOnly());
+
+			AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
+			if (HighScoreGameState)
+			{
+				HighScoreGameState->UpdateHUD();
+			}
+		}
+	}
+}
+
+void AHighScorePlayerController::ShowMainMenu(bool bIsRestart)
+{
+	// HUD가 켜져 있다면 닫기
+	if (HUDWidgetInstance)
+	{
+		HUDWidgetInstance->RemoveFromParent();
+		HUDWidgetInstance = nullptr;
+	}
+
+	// 이미 메뉴가 떠 있으면 제거
+	if (MainMenuWidgetInstance)
+	{
+		MainMenuWidgetInstance->RemoveFromParent();
+		MainMenuWidgetInstance = nullptr;
+	}
+
+	// 메뉴 UI 생성
+	if (MainMenuWidgetClass)
+	{
+		MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
+		if (MainMenuWidgetInstance)
+		{
+			MainMenuWidgetInstance->AddToViewport();
+
+			bShowMouseCursor = true;
+			SetInputMode(FInputModeUIOnly());
+		}
+
+		if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
+		{
+			if (bIsRestart)
+			{
+				ButtonText->SetText(FText::FromString(TEXT("Restart")));
+			}
+			else
+			{
+				ButtonText->SetText(FText::FromString(TEXT("Start")));
+			}
+		}
+	}
+}
+
+void AHighScorePlayerController::StartGame()
+{
+	if (UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
+	{
+		HighScoreGameInstance->CurrentLevelIndex = 0;
+		HighScoreGameInstance->TotalScore = 0;
+	}
+
+	UGameplayStatics::OpenLevel(GetWorld(), FName("L_Basic"));
 }

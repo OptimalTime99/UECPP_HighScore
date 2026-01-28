@@ -9,9 +9,6 @@
 class UInputMappingContext; // IMC 관련 전방 선언
 class UInputAction; // IA 관련 전방 선언
 
-/**
- * 
- */
 UCLASS()
 class HIGHSCORE_API AHighScorePlayerController : public APlayerController
 {
@@ -52,6 +49,26 @@ public:
 
     UFUNCTION(Category = "HUD", BlueprintPure)
     UUserWidget* GetHUDWidget() const;
+
+    UFUNCTION(Category = "HUD", BlueprintCallable)
+    void ShowGameHUD();
+#pragma endregion
+
+#pragma region Menu
+    // 메뉴 UI
+    UPROPERTY(Category = "Menu", EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UUserWidget> MainMenuWidgetClass;
+
+    UPROPERTY(Category = "Menu", VisibleAnywhere, BlueprintReadOnly)
+    UUserWidget* MainMenuWidgetInstance;
+
+    // 메인 메뉴 표시
+    UFUNCTION(Category = "Menu", BlueprintCallable)
+    void ShowMainMenu(bool bIsRestart);
+
+    // 게임 시작
+    UFUNCTION(Category = "Menu", BlueprintCallable)
+    void StartGame();
 #pragma endregion
 
 protected:
