@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Item/SpawnVolume.h"
 #include "Item/CoinItem.h"
+#include "HighScoreGameInstance.h"
 
 AHighScoreGameState::AHighScoreGameState()
 {
@@ -33,6 +34,18 @@ void AHighScoreGameState::AddScore(int32 Amount)
 {
 	Score += Amount;
 	UE_LOG(LogTemp, Warning, TEXT("Score: %d"), Score);
+
+	UHighScoreGameInstance* MyGameInstance = Cast<UHighScoreGameInstance>(GetGameInstance());
+
+	if (MyGameInstance)
+	{
+		MyGameInstance->AddToScore(Amount);
+		UE_LOG(LogTemp, Warning, TEXT("Instance Total Score Updated"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstance Cast Failed!"));
+	}
 }
 
 void AHighScoreGameState::StartLevel()
