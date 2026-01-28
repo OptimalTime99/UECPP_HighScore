@@ -1,12 +1,14 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
 
 #include "Character/HighScoreCharacter.h"
-#include "EnhancedInputComponent.h"
 #include "Character/HighScorePlayerController.h"
+#include "HighScoreGameState.h"
+#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/Actor.h"
+#include "Components/WidgetComponent.h"
+#include "Components/TextBlock.h"
 
 
 AHighScoreCharacter::AHighScoreCharacter()
@@ -31,6 +33,16 @@ AHighScoreCharacter::AHighScoreCharacter()
     CameraComp->bUsePawnControlRotation = false;
     CameraComp->SetRelativeRotation(FRotator(-25.0f, 0.0f, 0.0f));
 
+    OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
+    OverheadWidget->SetupAttachment(GetMesh());
+    OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
+    NormalSpeed = 600.0f;
+    SprintSpeedMultiplier = 1.5f;
+    SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
+
+    GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+
     // 초기 체력 설정
     MaxHealth = 100.0f;
     Health = MaxHealth;
@@ -39,17 +51,7 @@ AHighScoreCharacter::AHighScoreCharacter()
 void AHighScoreCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
-    Initialize();
-}
-
-void AHighScoreCharacter::Initialize()
-{
-    NormalSpeed = 600.0f;
-    SprintSpeedMultiplier = 1.5f;
-    SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
-
-    GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+    UpdateOverheadHP();
 }
 
 void AHighScoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -59,7 +61,7 @@ void AHighScoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
     // Enhanced InputComponent로 캐스팅
     if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
-        // IA를 가져오기 위해 현재 소유 중인 Controller를 ASpartaPlayerController로 캐스팅
+        // IA를 가져오기 위해 현재 소유 중인 Controller를 AHighScorePlayerController로 캐스팅
         if (AHighScorePlayerController* PlayerController = Cast<AHighScorePlayerController>(GetController()))
         {
             if (PlayerController->MoveAction)
@@ -207,7 +209,7 @@ void AHighScoreCharacter::AddHealth(float Amount)
 {
     // 체력을 회복시킴. 최대 체력을 초과하지 않도록 제한함
     Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
-    UE_LOG(LogTemp, Log, TEXT("Health increased to: %f"), Health);
+    UpdateOverheadHP();
 }
 
 // 데미지 처리 함수
@@ -222,7 +224,7 @@ float AHighScoreCharacter::TakeDamage(
 
     // 체력을 데미지만큼 감소시키고, 0 이하로 떨어지지 않도록 Clamp
     Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
-    UE_LOG(LogTemp, Warning, TEXT("Health decreased to: %f"), Health);
+    UpdateOverheadHP();
 
     // 체력이 0 이하가 되면 사망 처리
     if (Health <= 0.0f)
@@ -237,8 +239,24 @@ float AHighScoreCharacter::TakeDamage(
 // 사망 처리 함수
 void AHighScoreCharacter::OnDeath()
 {
-    UE_LOG(LogTemp, Error, TEXT("Character is Dead!"));
+    AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
 
-    // 사망 후 로직
+    if (HighScoreGameState)
+    {
+        HighScoreGameState->OnGameOver();
+    }
+}
+
+void AHighScoreCharacter::UpdateOverheadHP()
+{
+    if (!OverheadWidget) return;
+
+    UUserWidget* OverheadWidgetInstance = OverheadWidget->GetUserWidgetObject();
+    if (!OverheadWidgetInstance) return;
+
+    if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverHeadHP"))))
+    {
+        HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
+    }
 }
 

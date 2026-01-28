@@ -12,5 +12,4 @@ UHighScoreGameInstance::UHighScoreGameInstance()
 void UHighScoreGameInstance::AddToScore(int32 Amount)
 {
     TotalScore += Amount;
-    UE_LOG(LogTemp, Warning, TEXT("Total Score Updated: %d"), TotalScore);
 }

@@ -46,6 +46,9 @@ public:
 	// 매 레벨이 끝나기 전까지 시간이 흐르도록 관리하는 타이머
 	FTimerHandle LevelTimerHandle;
 
+	// UI Widget 시간 업데이트 타이머
+	FTimerHandle HUDUpdateTimerHandle;
+
 	UFUNCTION(Category = "Score", BlueprintPure)
 	int32 GetScore() const;
 
@@ -64,5 +67,7 @@ public:
 	void OnCoinCollected();
 	// 레벨을 강제 종료하고 다음 레벨로 이동
 	void EndLevel();
+	// 시간 초마다 업데이트
+	void UpdateHUD();
 	
 };
