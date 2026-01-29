@@ -231,6 +231,7 @@ void AHighScoreGameState::OnGameOver()
         {
             HighScorePlayerController->SetPause(true);
             HighScorePlayerController->ShowMainMenu(true);
+            HighScorePlayerController->SetIsExit(false);
         }
     }
 }
