@@ -10,13 +10,13 @@
 UINTERFACE(MinimalAPI)
 class UItemInterface : public UInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 };
 
 // 실제 C++ 레벨에서 사용할 함수 원형(시그니처)를 정의
 class HIGHSCORE_API IItemInterface
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 public:
     // 플레이어가 이 아이템의 범위에 들어왔을 때 호출
     virtual void OnItemOverlap(

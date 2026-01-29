@@ -56,108 +56,108 @@ UUserWidget* AHighScorePlayerController::GetHUDWidget() const
 
 void AHighScorePlayerController::ShowGameHUD()
 {
-	// HUD가 켜져 있다면 닫기
-	if (HUDWidgetInstance)
-	{
-		HUDWidgetInstance->RemoveFromParent();
-		HUDWidgetInstance = nullptr;
-	}
+    // HUD가 켜져 있다면 닫기
+    if (HUDWidgetInstance)
+    {
+        HUDWidgetInstance->RemoveFromParent();
+        HUDWidgetInstance = nullptr;
+    }
 
-	// 이미 메뉴가 떠 있으면 제거
-	if (MainMenuWidgetInstance)
-	{
-		MainMenuWidgetInstance->RemoveFromParent();
-		MainMenuWidgetInstance = nullptr;
-	}
+    // 이미 메뉴가 떠 있으면 제거
+    if (MainMenuWidgetInstance)
+    {
+        MainMenuWidgetInstance->RemoveFromParent();
+        MainMenuWidgetInstance = nullptr;
+    }
 
-	if (HUDWidgetClass)
-	{
-		HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-		if (HUDWidgetInstance)
-		{
-			HUDWidgetInstance->AddToViewport();
+    if (HUDWidgetClass)
+    {
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
+        {
+            HUDWidgetInstance->AddToViewport();
 
-			bShowMouseCursor = false;
-			SetInputMode(FInputModeGameOnly());
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
 
-			AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
-			if (HighScoreGameState)
-			{
-				HighScoreGameState->UpdateHUD();
-			}
-		}
-	}
+            AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
+            if (HighScoreGameState)
+            {
+                HighScoreGameState->UpdateHUD();
+            }
+        }
+    }
 }
 
 void AHighScorePlayerController::ShowMainMenu(bool bIsRestart)
 {
-	// HUD가 켜져 있다면 닫기
-	if (HUDWidgetInstance)
-	{
-		HUDWidgetInstance->RemoveFromParent();
-		HUDWidgetInstance = nullptr;
-	}
+    // HUD가 켜져 있다면 닫기
+    if (HUDWidgetInstance)
+    {
+        HUDWidgetInstance->RemoveFromParent();
+        HUDWidgetInstance = nullptr;
+    }
 
-	// 이미 메뉴가 떠 있으면 제거
-	if (MainMenuWidgetInstance)
-	{
-		MainMenuWidgetInstance->RemoveFromParent();
-		MainMenuWidgetInstance = nullptr;
-	}
+    // 이미 메뉴가 떠 있으면 제거
+    if (MainMenuWidgetInstance)
+    {
+        MainMenuWidgetInstance->RemoveFromParent();
+        MainMenuWidgetInstance = nullptr;
+    }
 
-	// 메뉴 UI 생성
-	if (MainMenuWidgetClass)
-	{
-		MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
-		if (MainMenuWidgetInstance)
-		{
-			MainMenuWidgetInstance->AddToViewport();
+    // 메뉴 UI 생성
+    if (MainMenuWidgetClass)
+    {
+        MainMenuWidgetInstance = CreateWidget<UUserWidget>(this, MainMenuWidgetClass);
+        if (MainMenuWidgetInstance)
+        {
+            MainMenuWidgetInstance->AddToViewport();
 
-			bShowMouseCursor = true;
-			SetInputMode(FInputModeUIOnly());
-		}
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeUIOnly());
+        }
 
-		if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
-		{
-			if (bIsRestart)
-			{
-				ButtonText->SetText(FText::FromString(TEXT("Restart")));
-			}
-			else
-			{
-				ButtonText->SetText(FText::FromString(TEXT("Start")));
-			}
-		}
+        if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
+        {
+            if (bIsRestart)
+            {
+                ButtonText->SetText(FText::FromString(TEXT("Restart")));
+            }
+            else
+            {
+                ButtonText->SetText(FText::FromString(TEXT("Start")));
+            }
+        }
 
-		if (bIsRestart)
-		{
-			UFunction* PlayAnimFunc = MainMenuWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
-			if (PlayAnimFunc)
-			{
-				MainMenuWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
-			}
+        if (bIsRestart)
+        {
+            UFunction* PlayAnimFunc = MainMenuWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
+            if (PlayAnimFunc)
+            {
+                MainMenuWidgetInstance->ProcessEvent(PlayAnimFunc, nullptr);
+            }
 
-			if (UTextBlock* TotalScoreText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName("TotalScoreText")))
-			{
-				if (UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
-				{
-					TotalScoreText->SetText(FText::FromString(
-						FString::Printf(TEXT("Total Score: %d"), HighScoreGameInstance->TotalScore)
-					));
-				}
-			}
-		}
-	}
+            if (UTextBlock* TotalScoreText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName("TotalScoreText")))
+            {
+                if (UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
+                {
+                    TotalScoreText->SetText(FText::FromString(
+                        FString::Printf(TEXT("Total Score: %d"), HighScoreGameInstance->TotalScore)
+                    ));
+                }
+            }
+        }
+    }
 }
 
 void AHighScorePlayerController::StartGame()
 {
-	if (UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
-	{
-		HighScoreGameInstance->CurrentLevelIndex = 0;
-		HighScoreGameInstance->TotalScore = 0;
-	}
+    if (UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
+    {
+        HighScoreGameInstance->CurrentLevelIndex = 0;
+        HighScoreGameInstance->TotalScore = 0;
+    }
 
-	UGameplayStatics::OpenLevel(GetWorld(), FName("L_Basic"));
-	SetPause(false);
+    UGameplayStatics::OpenLevel(GetWorld(), FName("L_Basic"));
+    SetPause(false);
 }

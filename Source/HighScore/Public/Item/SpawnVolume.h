@@ -12,8 +12,8 @@ class UBoxComponent;
 UCLASS()
 class HIGHSCORE_API ASpawnVolume : public AActor
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+    
 public:	
     ASpawnVolume();
 

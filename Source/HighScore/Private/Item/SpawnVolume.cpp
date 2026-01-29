@@ -8,7 +8,7 @@
 
 ASpawnVolume::ASpawnVolume()
 {
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 
     // 박스 컴포넌트를 생성하고, 이 액터의 루트로 설정
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));

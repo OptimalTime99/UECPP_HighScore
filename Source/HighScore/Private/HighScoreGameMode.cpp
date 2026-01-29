@@ -6,9 +6,9 @@
 
 AHighScoreGameMode::AHighScoreGameMode()
 {
-	DefaultPawnClass = AHighScoreCharacter::StaticClass();
-	
-	PlayerControllerClass = AHighScorePlayerController::StaticClass();
+    DefaultPawnClass = AHighScoreCharacter::StaticClass();
+    
+    PlayerControllerClass = AHighScorePlayerController::StaticClass();
 
-	GameStateClass = AHighScoreGameState::StaticClass();
+    GameStateClass = AHighScoreGameState::StaticClass();
 }
