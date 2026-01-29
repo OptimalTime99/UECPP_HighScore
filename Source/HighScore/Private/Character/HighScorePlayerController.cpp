@@ -8,6 +8,7 @@
 #include "HighScoreGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/TextBlock.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 AHighScorePlayerController::AHighScorePlayerController()
     : InputMappingContext(nullptr),
@@ -20,6 +21,7 @@ AHighScorePlayerController::AHighScorePlayerController()
     MainMenuWidgetClass(nullptr),
     MainMenuWidgetInstance(nullptr)
 {
+    bIsExit = true;
 }
 
 void AHighScorePlayerController::BeginPlay()
@@ -117,15 +119,27 @@ void AHighScorePlayerController::ShowMainMenu(bool bIsRestart)
             SetInputMode(FInputModeUIOnly());
         }
 
-        if (UTextBlock* ButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
+        if (UTextBlock* StartButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("StartButtonText"))))
         {
             if (bIsRestart)
             {
-                ButtonText->SetText(FText::FromString(TEXT("Restart")));
+                StartButtonText->SetText(FText::FromString(TEXT("RESTART")));
             }
             else
             {
-                ButtonText->SetText(FText::FromString(TEXT("Start")));
+                StartButtonText->SetText(FText::FromString(TEXT("START")));
+            }
+        }
+
+        if (UTextBlock* ExitButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("ExitButtonText"))))
+        {
+            if (bIsRestart)
+            {
+                ExitButtonText->SetText(FText::FromString(TEXT("MAIN MENU")));
+            }
+            else
+            {
+                ExitButtonText->SetText(FText::FromString(TEXT("EXIT")));
             }
         }
 
@@ -160,4 +174,24 @@ void AHighScorePlayerController::StartGame()
 
     UGameplayStatics::OpenLevel(GetWorld(), FName("L_Basic"));
     SetPause(false);
+}
+
+void AHighScorePlayerController::ExitGame()
+{
+    if (bIsExit)
+    {
+        // 평상시엔 게임 종료
+        UKismetSystemLibrary::QuitGame(GetWorld(), this, EQuitPreference::Quit, false);
+    }
+    else
+    {
+        // 죽었을 때는 메인 메뉴로 이동
+        UGameplayStatics::OpenLevel(GetWorld(), TEXT("L_MenuLevel"));
+        ShowMainMenu(false);
+    }
+}
+
+void AHighScorePlayerController::SetIsExit(bool bInIsExit)
+{
+    bIsExit = bInIsExit;
 }

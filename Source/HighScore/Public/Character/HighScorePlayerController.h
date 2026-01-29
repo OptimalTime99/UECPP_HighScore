@@ -62,6 +62,7 @@ public:
     UPROPERTY(Category = "Menu", VisibleAnywhere, BlueprintReadOnly)
     UUserWidget* MainMenuWidgetInstance;
 
+
     // 메인 메뉴 표시
     UFUNCTION(Category = "Menu", BlueprintCallable)
     void ShowMainMenu(bool bIsRestart);
@@ -69,8 +70,19 @@ public:
     // 게임 시작
     UFUNCTION(Category = "Menu", BlueprintCallable)
     void StartGame();
+
+    // 게임 종료
+    UFUNCTION(Category = "Menu", BlueprintCallable)
+    void ExitGame();
+
+    
+    void SetIsExit(bool bIsExit);
+
 #pragma endregion
 
 protected:
     virtual void BeginPlay() override;
+
+private:
+    bool bIsExit;
 };
