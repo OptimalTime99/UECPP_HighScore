@@ -28,7 +28,7 @@ public:
     int32 CollectedCoinCount;
 
     // 각 레벨이 유지되는 시간 (초 단위)
-    UPROPERTY(Category = "Level", VisibleAnywhere, BlueprintReadOnly)
+    UPROPERTY(Category = "Level", EditAnywhere, BlueprintReadOnly)
     float LevelDuration;
 
     // 현재 진행 중인 레벨 인덱스
@@ -42,6 +42,19 @@ public:
     // 실제 레벨 맵 이름 배열. 여기 있는 인덱스를 차례대로 연동
     UPROPERTY(Category = "Level", EditAnywhere, BlueprintReadOnly)
     TArray<FName> LevelMapNames;
+
+    int32 LevelWave;
+
+    UPROPERTY(Category = "Level", EditAnywhere, BlueprintReadOnly)
+    int32 ItemToSpawn;
+
+    UPROPERTY(Category = "Level", EditAnywhere, BlueprintReadOnly)
+    int32 MultipleTime;
+
+    UPROPERTY(Category = "Level", EditAnywhere, BlueprintReadOnly)
+    int32 MultipleItem;
+
+    float MaxLevelDuration;
 
     // 매 레벨이 끝나기 전까지 시간이 흐르도록 관리하는 타이머
     FTimerHandle LevelTimerHandle;
@@ -61,6 +74,8 @@ public:
 
     // 레벨을 시작할 때, 아이템 스폰 및 타이머 설정
     void StartLevel();
+    // 웨이브 시작할 때, 아이템 스폰 및 타이머 설정
+    void StartWave();
     // 레벨 제한 시간이 만료되었을 때 호출
     void OnLevelTimeUp();
     // 코인을 주웠을 때 호출
@@ -69,5 +84,6 @@ public:
     void EndLevel();
     // 시간 초마다 업데이트
     void UpdateHUD();
+    
     
 };
