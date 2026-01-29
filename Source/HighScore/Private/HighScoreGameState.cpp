@@ -17,9 +17,14 @@ AHighScoreGameState::AHighScoreGameState()
     Score = 0;
     SpawnedCoinCount = 0;
     CollectedCoinCount = 0;
-    LevelDuration = 30.0f; // 한 레벨당 30초
     CurrentLevelIndex = 0;
     MaxLevels = 3;
+    MaxLevelDuration = 60.0f;
+    LevelDuration = MaxLevelDuration;
+    LevelWave = 1;
+    ItemToSpawn = 40;
+    MultipleTime = 15;
+    MultipleItem = 10;
 }
 
 void AHighScoreGameState::BeginPlay()
@@ -55,6 +60,7 @@ void AHighScoreGameState::AddScore(int32 Amount)
 
 void AHighScoreGameState::StartLevel()
 {
+    // GameUI 표시
     if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
     {
         if (AHighScorePlayerController* HighScorePlayerController = Cast<AHighScorePlayerController>(PlayerController))
@@ -63,6 +69,7 @@ void AHighScoreGameState::StartLevel()
         }
     }
 
+    // 현재 맵 레벨 설정
     if (UGameInstance* GameInstance = GetGameInstance())
     {
         UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(GameInstance);
@@ -72,20 +79,30 @@ void AHighScoreGameState::StartLevel()
         }
     }
 
+    StartWave();
+}
+
+void AHighScoreGameState::StartWave()
+{
     SpawnedCoinCount = 0;
     CollectedCoinCount = 0;
 
+    GetWorldTimerManager().ClearTimer(LevelTimerHandle);
+    //LevelTimerHandle.Invalidate();
+
+    LevelDuration = MaxLevelDuration - ((LevelWave - 1) * MultipleTime);    
+
+    int32 CurrentWaveItemCount = ItemToSpawn - ((LevelWave - 1) * MultipleItem);
+
     TArray<AActor*> FoundVolumes;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
-
-    const int32 ItemToSpawn = 40;
 
     if (FoundVolumes.Num() > 0)
     {
         ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
         if (SpawnVolume)
         {
-            for (int32 i = 0; i < ItemToSpawn; i++)
+            for (int32 i = 0; i < CurrentWaveItemCount; i++)
             {
                 AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
                 if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass()))
@@ -107,8 +124,19 @@ void AHighScoreGameState::StartLevel()
 
 void AHighScoreGameState::OnLevelTimeUp()
 {
-    // 시간이 다 되면 레벨을 종료
-    EndLevel();
+    if (LevelWave < 3)
+    {
+        // 다음 웨이브 진행
+        LevelWave++;
+        StartWave();
+        UpdateHUD();
+    }
+    else
+    {
+        // 3웨이브까지 끝났다면 다음 레벨로 이동
+        LevelWave = 1; 
+        EndLevel();
+    }
 }
 
 void AHighScoreGameState::OnCoinCollected()
@@ -118,7 +146,9 @@ void AHighScoreGameState::OnCoinCollected()
     // 현재 레벨에서 스폰된 코인을 전부 주웠다면 즉시 레벨 종료
     if (SpawnedCoinCount > 0 && CollectedCoinCount >= SpawnedCoinCount)
     {
-        EndLevel();
+        // 타이머를 멈추고 강제로 OnLevelTimeUp을 호출하여 다음 단계로 넘김
+        GetWorldTimerManager().ClearTimer(LevelTimerHandle);
+        OnLevelTimeUp();
     }
 }
 
@@ -186,7 +216,8 @@ void AHighScoreGameState::UpdateHUD()
                 if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
                 {
                     float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
-                    TimeText->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), RemainingTime)));
+                    float DisplayTime = FMath::Max(RemainingTime, 0.0f);
+                    TimeText->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), DisplayTime)));
                 }
 
                 if (UProgressBar* TimeProgressBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("PB_Time"))))
@@ -197,7 +228,7 @@ void AHighScoreGameState::UpdateHUD()
                     // LevelDuration이 0이면 나누기 에러가 나므로 안전장치 추가
                     if (LevelDuration > 0.f)
                     {
-                        float Percent = RemainingTime / LevelDuration;
+                        float Percent = FMath::Clamp(RemainingTime / LevelDuration, 0.0f, 1.0f);
                         TimeProgressBar->SetPercent(Percent); // 게이지 설정 함수
                     }
                 }
@@ -216,7 +247,7 @@ void AHighScoreGameState::UpdateHUD()
 
                 if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Stage"))))
                 {
-                    LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("STAGE %d"), CurrentLevelIndex + 1)));
+                    LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("STAGE %d-%d"), CurrentLevelIndex + 1, LevelWave)));
                 }
             }
         }
