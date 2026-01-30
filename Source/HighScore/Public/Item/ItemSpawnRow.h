@@ -25,5 +25,5 @@ public:
 
     // 이 아이템의 스폰 확률
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float SpawnChance;
+    float SpawnChance = 0.0f;
 };

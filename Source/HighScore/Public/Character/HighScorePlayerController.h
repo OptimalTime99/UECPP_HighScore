@@ -6,8 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "HighScorePlayerController.generated.h"
 
-class UInputMappingContext; // IMC 관련 전방 선언
-class UInputAction; // IA 관련 전방 선언
+class UInputMappingContext;
+class UInputAction;
 
 UCLASS()
 class HIGHSCORE_API AHighScorePlayerController : public APlayerController
@@ -39,34 +39,8 @@ public:
     TObjectPtr<UInputAction> SprintAction;
 #pragma endregion
 
-#pragma region HUD
-    // UMG 위젯 클래스를 에디터에서 할당받을 변수
-    UPROPERTY(Category = "HUD", EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UUserWidget> HUDWidgetClass;
-
-    UPROPERTY(Category = "HUD", VisibleAnywhere, BlueprintReadOnly)
-    TObjectPtr<UUserWidget> HUDWidgetInstance;
-
-    UFUNCTION(Category = "HUD", BlueprintPure)
-    UUserWidget* GetHUDWidget() const;
-
-    UFUNCTION(Category = "HUD", BlueprintCallable)
-    void ShowGameHUD();
-#pragma endregion
 
 #pragma region Menu
-    // 메뉴 UI
-    UPROPERTY(Category = "Menu", EditAnywhere, BlueprintReadWrite)
-    TSubclassOf<UUserWidget> MainMenuWidgetClass;
-
-    UPROPERTY(Category = "Menu", VisibleAnywhere, BlueprintReadOnly)
-    UUserWidget* MainMenuWidgetInstance;
-
-
-    // 메인 메뉴 표시
-    UFUNCTION(Category = "Menu", BlueprintCallable)
-    void ShowMainMenu(bool bIsRestart);
-
     // 게임 시작
     UFUNCTION(Category = "Menu", BlueprintCallable)
     void StartGame();
@@ -75,8 +49,15 @@ public:
     UFUNCTION(Category = "Menu", BlueprintCallable)
     void ExitGame();
 
-    
-    void SetIsExit(bool bIsExit);
+    // 게임 플레이 화면 표시
+    UFUNCTION(Category = "HUD", BlueprintCallable)
+    void ShowGameplayHUD();
+
+    // 메인 메뉴 표시
+    UFUNCTION(Category = "Menu", BlueprintCallable)
+    void ShowMainMenuHUD(bool bIsRestart);
+
+    void SetIsExit(bool bInIsExit) { bIsExit = bInIsExit; };
 
 #pragma endregion
 
