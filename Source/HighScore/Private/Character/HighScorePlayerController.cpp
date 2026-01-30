@@ -58,13 +58,15 @@ void AHighScorePlayerController::ShowMainMenuHUD(bool bIsRestart)
 
 void AHighScorePlayerController::StartGame()
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("StartGame Called!"));
+
     if (UHighScoreGameInstance* HighScoreGI = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
     {
         HighScoreGI->CurrentLevelIndex = 0;
         HighScoreGI->TotalScore = 0;
     }
 
-    UGameplayStatics::OpenLevel(GetWorld(), FName("L_Basic"));
+    UGameplayStatics::OpenLevel(GetWorld(), FName("/Game/Maps/L_Basic"));
 }
 
 void AHighScorePlayerController::ExitGame()
@@ -77,7 +79,7 @@ void AHighScorePlayerController::ExitGame()
     else
     {
         // MAIN MENU 버튼 누르면 메인 메뉴로 이동
-        UGameplayStatics::OpenLevel(GetWorld(), TEXT("L_MenuLevel"));
+        UGameplayStatics::OpenLevel(GetWorld(), FName("/Game/Maps/L_MenuLevel"));
         ShowMainMenuHUD(false);
     }
 }
