@@ -72,7 +72,7 @@ public:
     UFUNCTION(Category = "Level", BlueprintCallable)
     void OnGameOver();
 
-    // 레벨을 시작할 때, 아이템 스폰 및 타이머 설정
+    // 게임 시작 진입점
     void StartLevel();
     // 웨이브 시작할 때, 아이템 스폰 및 타이머 설정
     void StartWave();

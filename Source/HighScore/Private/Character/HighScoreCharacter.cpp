@@ -198,12 +198,6 @@ void AHighScoreCharacter::StopSprint(const FInputActionValue& value)
     }
 }
 
-// 현재 체력을 가져오는 함수
-int32 AHighScoreCharacter::GetHealth() const
-{
-    return Health;
-}
-
 // 체력 회복 함수
 void AHighScoreCharacter::AddHealth(float Amount)
 {
@@ -239,6 +233,7 @@ float AHighScoreCharacter::TakeDamage(
 // 사망 처리 함수
 void AHighScoreCharacter::OnDeath()
 {
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("OnDeath() 실행"));
     AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
 
     if (HighScoreGameState)

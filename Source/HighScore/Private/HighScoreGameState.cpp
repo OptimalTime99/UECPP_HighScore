@@ -11,6 +11,7 @@
 #include "Components/ProgressBar.h"
 #include "Blueprint/UserWidget.h"
 #include "Character/HighScoreCharacter.h"
+#include "HighScoreHUD.h"
 
 AHighScoreGameState::AHighScoreGameState()
 {
@@ -33,14 +34,6 @@ void AHighScoreGameState::BeginPlay()
 
     // 게임 시작 시 첫 레벨부터 진행
     StartLevel();
-
-    GetWorldTimerManager().SetTimer(
-        HUDUpdateTimerHandle,
-        this,
-        &AHighScoreGameState::UpdateHUD,
-        0.1f,
-        true
-    );
 }
 
 int32 AHighScoreGameState::GetScore() const
@@ -65,7 +58,8 @@ void AHighScoreGameState::StartLevel()
     {
         if (AHighScorePlayerController* HighScorePlayerController = Cast<AHighScorePlayerController>(PlayerController))
         {
-            HighScorePlayerController->ShowGameHUD();
+            HighScorePlayerController->ShowMainMenuHUD(false);
+            HighScorePlayerController->ShowGameplayHUD();
         }
     }
 
@@ -79,6 +73,14 @@ void AHighScoreGameState::StartLevel()
         }
     }
 
+    GetWorldTimerManager().SetTimer(
+        HUDUpdateTimerHandle,
+        this,
+        &AHighScoreGameState::UpdateHUD,
+        0.1f,
+        true
+    );
+
     StartWave();
 }
 
@@ -88,15 +90,12 @@ void AHighScoreGameState::StartWave()
     CollectedCoinCount = 0;
 
     GetWorldTimerManager().ClearTimer(LevelTimerHandle);
-    //LevelTimerHandle.Invalidate();
 
     LevelDuration = MaxLevelDuration - ((LevelWave - 1) * MultipleTime);    
-
     int32 CurrentWaveItemCount = ItemToSpawn - ((LevelWave - 1) * MultipleItem);
 
     TArray<AActor*> FoundVolumes;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
-
     if (FoundVolumes.Num() > 0)
     {
         ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
@@ -186,83 +185,51 @@ void AHighScoreGameState::EndLevel()
 
 void AHighScoreGameState::UpdateHUD()
 {
-    if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC) return;
+
+    AHighScoreHUD* HUDWidget = Cast<AHighScoreHUD>(PC->GetHUD());
+    AHighScoreCharacter* MyChar = Cast<AHighScoreCharacter>(PC->GetPawn());
+
+    if (HUDWidget && MyChar)
     {
-        AHighScorePlayerController* HighScorePlayerController = Cast<AHighScorePlayerController>(PlayerController);
+        float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+        int32 TotalScore = 0;
+        if (UHighScoreGameInstance* GI = Cast<UHighScoreGameInstance>(GetGameInstance()))
         {
-            if (UUserWidget* HUDWidget = HighScorePlayerController->GetHUDWidget())
-            {
-                AHighScoreCharacter* MyCharacter = Cast<AHighScoreCharacter>(PlayerController->GetPawn());
-
-                if (MyCharacter) // 캐릭터가 살아있을 때만 갱신
-                {
-                    if (UTextBlock* HPText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("HP"))))
-                    {
-                        HPText->SetText(FText::FromString(FString::Printf(TEXT("%d"), (int32)MyCharacter->GetHealth())));
-                    }
-
-                    if (UProgressBar* HPBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("PB_HP"))))
-                    {
-                        float MaxHealth = 100.0f;
-
-                        if (MaxHealth > 0.0f)
-                        {
-                            float HPRatio = MyCharacter->GetHealth() / MaxHealth;
-                            HPBar->SetPercent(HPRatio);
-                        }
-                    }
-                }
-
-                if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
-                {
-                    float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
-                    float DisplayTime = FMath::Max(RemainingTime, 0.0f);
-                    TimeText->SetText(FText::FromString(FString::Printf(TEXT("%.1f"), DisplayTime)));
-                }
-
-                if (UProgressBar* TimeProgressBar = Cast<UProgressBar>(HUDWidget->GetWidgetFromName(TEXT("PB_Time"))))
-                {
-                    float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
-
-                    // [중요] 0.0(0%) ~ 1.0(100%) 사이의 값으로 만들어야 합니다.
-                    // LevelDuration이 0이면 나누기 에러가 나므로 안전장치 추가
-                    if (LevelDuration > 0.f)
-                    {
-                        float Percent = FMath::Clamp(RemainingTime / LevelDuration, 0.0f, 1.0f);
-                        TimeProgressBar->SetPercent(Percent); // 게이지 설정 함수
-                    }
-                }
-
-                if (UTextBlock* ScoreText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Score"))))
-                {
-                    if (UGameInstance* GameInstance = GetGameInstance())
-                    {
-                        UHighScoreGameInstance* HighScoreGameInstance = Cast<UHighScoreGameInstance>(GameInstance);
-                        if (HighScoreGameInstance)
-                        {
-                            ScoreText->SetText(FText::FromString(FString::Printf(TEXT("SCORE: %d"), HighScoreGameInstance->TotalScore)));
-                        }
-                    }
-                }
-
-                if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Stage"))))
-                {
-                    LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("STAGE %d-%d"), CurrentLevelIndex + 1, LevelWave)));
-                }
-            }
+            TotalScore = GI->TotalScore;
         }
+
+        // HUD에 데이터 전달
+        HUDWidget->UpdateHUDContents(
+            MyChar->GetHealth(),
+            MyChar->GetMaxHealth(),
+            RemainingTime,
+            LevelDuration,
+            TotalScore,
+            CurrentLevelIndex + 1,
+            LevelWave
+        );
     }
 }
 
 void AHighScoreGameState::OnGameOver()
 {
-    if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("OnGameOver() 실행"));
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC) return;
+
+    AHighScorePlayerController* HPC = Cast<AHighScorePlayerController>(PC);
+    if (HPC)
     {
-        if (AHighScorePlayerController* HighScorePlayerController = Cast<AHighScorePlayerController>(PlayerController))
-        {
-            HighScorePlayerController->SetPause(true);
-            HighScorePlayerController->ShowMainMenu(true);
-            HighScorePlayerController->SetIsExit(false);
-        }
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("OnGameOver()에 HPC가 있음"));
+        HPC->ShowMainMenuHUD(true);
+        PC->SetIgnoreLookInput(true);
+        PC->SetIgnoreMoveInput(true);
+        HPC->SetIsExit(false);
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("OnGameOver()에 HPC가 없음"));
     }
 }

@@ -23,7 +23,11 @@ public:
 
     // 현재 체력을 가져오는 함수
     UFUNCTION(Category = "Health", BlueprintPure)
-    int32 GetHealth() const;
+    int32 GetHealth() const { return Health; };
+
+    // 최대 체력을 가져오는 함수
+    UFUNCTION(Category = "Health", BlueprintPure)
+    int32 GetMaxHealth() const { return MaxHealth; };
 
     // 체력을 회복시키는 함수
     UFUNCTION(Category = "Health", BlueprintCallable)
