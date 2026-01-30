@@ -58,8 +58,6 @@ void AHighScorePlayerController::ShowMainMenuHUD(bool bIsRestart)
 
 void AHighScorePlayerController::StartGame()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("StartGame Called!"));
-
     if (UHighScoreGameInstance* HighScoreGI = Cast<UHighScoreGameInstance>(UGameplayStatics::GetGameInstance(this)))
     {
         HighScoreGI->CurrentLevelIndex = 0;
