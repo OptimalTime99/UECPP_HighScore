@@ -6,8 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "HighScorePlayerController.generated.h"
 
-class UInputMappingContext; // IMC 관련 전방 선언
-class UInputAction; // IA 관련 전방 선언
+class UInputMappingContext;
+class UInputAction;
 
 UCLASS()
 class HIGHSCORE_API AHighScorePlayerController : public APlayerController
@@ -57,9 +57,7 @@ public:
     UFUNCTION(Category = "Menu", BlueprintCallable)
     void ShowMainMenuHUD(bool bIsRestart);
 
-    void UpdateMainMenuUI(bool bIsRestart);
-
-    void SetIsExit(bool bIsExit);
+    void SetIsExit(bool bInIsExit) { bIsExit = bInIsExit; };
 
 #pragma endregion
 

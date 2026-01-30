@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "EnhancedInputComponent.h"
 #include "HighScoreCharacter.generated.h"
 
-class USpringArmComponent; // 스프링 암 관련 클래스 헤더
-class UCameraComponent; // 카메라 관련 클래스 전방 선언
+class USpringArmComponent;
+class UCameraComponent;
 class UWidgetComponent;
 
 // Enhanced Input에서 액션 값을 받을 때 사용하는 구조체
@@ -62,14 +63,10 @@ protected:
     void StopSprint(const FInputActionValue& value);
 #pragma endregion
 
-
-
     // 데미지 처리 함수 - 외부로부터 데미지를 받을 때 호출됨
-    // 또는 AActor의 TakeDamage()를 오버라이드
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 private:
-
 #pragma region Camera
     // 스프링 암 컴포넌트
     UPROPERTY(Category = "Camera", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))

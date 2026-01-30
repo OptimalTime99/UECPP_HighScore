@@ -1,45 +1,29 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
 
-
 #include "HighScoreHUD.h"
+#include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "HighScoreGameInstance.h"
-#include "Components/ProgressBar.h"
-
 
 void AHighScoreHUD::ShowGameplayHUD()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("1. ShowGameplayHUD 실행"));
-
     if (GameplayWidgetClass)
     {
         ClearAllWidgets();
         APlayerController* PC = GetOwningPlayerController();
-        HUDWidgetInstance = CreateWidget<UUserWidget>(GetOwningPlayerController(), GameplayWidgetClass);
-        if (PC && HUDWidgetInstance)
+        GameplayWidgetInstance = CreateWidget<UUserWidget>(PC, GameplayWidgetClass);
+        if (PC && GameplayWidgetInstance)
         {
-            HUDWidgetInstance->AddToViewport();
+            GameplayWidgetInstance->AddToViewport();
 
-            // 게임 모드로 전환
             FInputModeGameOnly InputMode;
             PC->SetInputMode(InputMode);
-            PC->bShowMouseCursor = false;
         }
-        else
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("2 HUDWidgetInstance가 없음"));
-        }
-    }
-    else
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("3 GameplayWidgetClass가 없음"));
     }
 }
 
 void AHighScoreHUD::ShowMainMenuHUD(bool bIsRestart)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("1. ShowMainMenuHUD 실행"));
-
     if (MainMenuWidgetClass)
     {
         ClearAllWidgets();
@@ -47,26 +31,16 @@ void AHighScoreHUD::ShowMainMenuHUD(bool bIsRestart)
         MainMenuWidgetInstance = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
         if (PC && MainMenuWidgetInstance)
         {
+            UpdateMainMenuHUD(bIsRestart);
             MainMenuWidgetInstance->AddToViewport();
-            UpdateMainMenuUI(bIsRestart);
 
-            // UI 모드로 전환
             FInputModeUIOnly InputMode;
             PC->SetInputMode(InputMode);
-            PC->bShowMouseCursor = true;
         }
-        else
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("2 MainMenuWidgetInstance가 없음"));
-        }
-    }
-    else
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("3 MainMenuWidgetClass가 없음"));
     }
 }
 
-void AHighScoreHUD::UpdateMainMenuUI(bool bIsRestart)
+void AHighScoreHUD::UpdateMainMenuHUD(bool bIsRestart)
 {
     if (!MainMenuWidgetInstance) return;
 
@@ -112,35 +86,36 @@ void AHighScoreHUD::ClearAllWidgets()
     }
 
     // 게임 HUD 위젯이 떠 있다면 제거
-    if (HUDWidgetInstance)
+    if (GameplayWidgetInstance)
     {
-        HUDWidgetInstance->RemoveFromParent();
-        HUDWidgetInstance = nullptr;
+        GameplayWidgetInstance->RemoveFromParent();
+        GameplayWidgetInstance = nullptr;
     }
 }
 
-void AHighScoreHUD::UpdateHUDContents(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave)
+void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave)
 {
-    if (!HUDWidgetInstance) return;
+    if (!GameplayWidgetInstance) return;
 
     // HP 업데이트
-    if (UTextBlock* HPText = Cast<UTextBlock>(HUDWidgetInstance->GetWidgetFromName(TEXT("HP"))))
+    if (UTextBlock* HPText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("HP"))))
         HPText->SetText(FText::AsNumber((int32)Health));
 
-    if (UProgressBar* HPBar = Cast<UProgressBar>(HUDWidgetInstance->GetWidgetFromName(TEXT("PB_HP"))))
+    if (UProgressBar* HPBar = Cast<UProgressBar>(GameplayWidgetInstance->GetWidgetFromName(TEXT("PB_HP"))))
         HPBar->SetPercent(MaxHealth > 0 ? Health / MaxHealth : 0);
 
     // 시간 업데이트
-    if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidgetInstance->GetWidgetFromName(TEXT("Time"))))
+    if (UTextBlock* TimeText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("Time"))))
         TimeText->SetText(FText::Format(FText::FromString("{0}"), FText::AsNumber(FMath::Max(RemainingTime, 0.0f), &FNumberFormattingOptions().SetMaximumFractionalDigits(1))));
 
-    if (UProgressBar* TimeBar = Cast<UProgressBar>(HUDWidgetInstance->GetWidgetFromName(TEXT("PB_Time"))))
+    if (UProgressBar* TimeBar = Cast<UProgressBar>(GameplayWidgetInstance->GetWidgetFromName(TEXT("PB_Time"))))
         TimeBar->SetPercent(Duration > 0 ? FMath::Clamp(RemainingTime / Duration, 0.0f, 1.0f) : 0);
 
-    // 점수 및 스테이지
-    if (UTextBlock* ScoreText = Cast<UTextBlock>(HUDWidgetInstance->GetWidgetFromName(TEXT("Score"))))
+    // 점수 업데이트
+    if (UTextBlock* ScoreText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("Score"))))
         ScoreText->SetText(FText::Format(FText::FromString("SCORE: {0}"), FText::AsNumber(Score)));
 
-    if (UTextBlock* LevelText = Cast<UTextBlock>(HUDWidgetInstance->GetWidgetFromName(TEXT("Stage"))))
+    // 스테이지 업데이트
+    if (UTextBlock* LevelText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("Stage"))))
         LevelText->SetText(FText::Format(FText::FromString("STAGE {0}-{1}"), FText::AsNumber(Level), FText::AsNumber(Wave)));
 }

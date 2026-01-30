@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include "Blueprint/UserWidget.h"
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "Blueprint/UserWidget.h"
 #include "HighScoreHUD.generated.h"
 
 UCLASS()
@@ -19,26 +19,27 @@ public:
     UPROPERTY(Category = "HUD", EditAnywhere)
     TSubclassOf<UUserWidget> MainMenuWidgetClass;
 
+    UPROPERTY(Category = "HUD", VisibleAnywhere)
+    TObjectPtr<UUserWidget> GameplayWidgetInstance;
 
-    UPROPERTY()
-    TObjectPtr<UUserWidget> HUDWidgetInstance;
-
-    UPROPERTY()
+    UPROPERTY(Category = "HUD", VisibleAnywhere)
     TObjectPtr<UUserWidget> MainMenuWidgetInstance;
-
-
-    UFUNCTION(Category = "HUD", BlueprintCallable)
-    void ShowGameplayHUD();
 
     UFUNCTION(Category = "HUD", BlueprintCallable)
     void ShowMainMenuHUD(bool bIsRestart);
 
-    void UpdateMainMenuUI(bool bIsRestart);
+    UFUNCTION(Category = "HUD", BlueprintCallable)
+    void ShowGameplayHUD();
 
+    UFUNCTION(Category = "HUD", BlueprintPure)
+    UUserWidget* GetGameplayWidget() const { return GameplayWidgetInstance; }
+
+    UFUNCTION(Category = "HUD", BlueprintCallable)
+    void UpdateMainMenuHUD(bool bIsRestart);
+
+    UFUNCTION(Category = "HUD", BlueprintCallable)
+    void UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave);
+
+    UFUNCTION(Category = "HUD", BlueprintCallable)
     void ClearAllWidgets();
-
-    UFUNCTION(BlueprintPure, Category = "HUD")
-    UUserWidget* GetHUDWidget() const { return HUDWidgetInstance; }
-
-    void UpdateHUDContents(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave);
 };

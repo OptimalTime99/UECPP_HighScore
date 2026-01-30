@@ -2,34 +2,26 @@
 
 #include "Character/HighScoreCharacter.h"
 #include "Character/HighScorePlayerController.h"
-#include "HighScoreGameState.h"
-#include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/TextBlock.h"
+#include "Components/WidgetComponent.h"
+#include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Components/WidgetComponent.h"
-#include "Components/TextBlock.h"
-
+#include "HighScoreGameState.h"
 
 AHighScoreCharacter::AHighScoreCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
     
-    // (1) 스프링 암 생성
     SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-    // 스프링 암을 루트 컴포넌트 (CapsuleComponent)에 부착
     SpringArmComp->SetupAttachment(RootComponent);
-    // 캐릭터와 카메라 사이의 거리 기본값 200으로 설정
     SpringArmComp->TargetArmLength = 200.0f;  
-    // 컨트롤러 회전에 따라 스프링 암도 회전하도록 설정
     SpringArmComp->bUsePawnControlRotation = true;
     SpringArmComp->SocketOffset = FVector(0.0f, 0.0f, 150.f);
 
-    // (2) 카메라 컴포넌트 생성
     CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-    // 스프링 암의 소켓 위치에 카메라를 부착
     CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
-    // 카메라는 스프링 암의 회전을 따르므로 PawnControlRotation은 꺼둠
     CameraComp->bUsePawnControlRotation = false;
     CameraComp->SetRelativeRotation(FRotator(-25.0f, 0.0f, 0.0f));
 
@@ -40,10 +32,8 @@ AHighScoreCharacter::AHighScoreCharacter()
     NormalSpeed = 600.0f;
     SprintSpeedMultiplier = 1.5f;
     SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
-
     GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
 
-    // 초기 체력 설정
     MaxHealth = 100.0f;
     Health = MaxHealth;
 }
@@ -59,64 +49,64 @@ void AHighScoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
     // Enhanced InputComponent로 캐스팅
-    if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+    if (UEnhancedInputComponent* EI = Cast<UEnhancedInputComponent>(PlayerInputComponent))
     {
         // IA를 가져오기 위해 현재 소유 중인 Controller를 AHighScorePlayerController로 캐스팅
-        if (AHighScorePlayerController* PlayerController = Cast<AHighScorePlayerController>(GetController()))
+        if (AHighScorePlayerController* PC = Cast<AHighScorePlayerController>(GetController()))
         {
-            if (PlayerController->MoveAction)
+            if (PC->MoveAction)
             {
                 // IA_Move 액션 키를 "키를 누르고 있는 동안" Move() 호출
-                EnhancedInput->BindAction(
-                    PlayerController->MoveAction,
+                EI->BindAction(
+                    PC->MoveAction,
                     ETriggerEvent::Triggered,
                     this,
                     &AHighScoreCharacter::Move
                 );
             }
 
-            if (PlayerController->JumpAction)
+            if (PC->JumpAction)
             {
                 // IA_Jump 액션 키를 "키를 누르고 있는 동안" StartJump() 호출
-                EnhancedInput->BindAction(
-                    PlayerController->JumpAction,
+                EI->BindAction(
+                    PC->JumpAction,
                     ETriggerEvent::Triggered,
                     this,
                     &AHighScoreCharacter::StartJump
                 );
 
                 // IA_Jump 액션 키에서 "손을 뗀 순간" StopJump() 호출
-                EnhancedInput->BindAction(
-                    PlayerController->JumpAction,
+                EI->BindAction(
+                    PC->JumpAction,
                     ETriggerEvent::Completed,
                     this,
                     &AHighScoreCharacter::StopJump
                 );
             }
 
-            if (PlayerController->LookAction)
+            if (PC->LookAction)
             {
                 // IA_Look 액션 마우스가 "움직일 때" Look() 호출
-                EnhancedInput->BindAction(
-                    PlayerController->LookAction,
+                EI->BindAction(
+                    PC->LookAction,
                     ETriggerEvent::Triggered,
                     this,
                     &AHighScoreCharacter::Look
                 );
             }
 
-            if (PlayerController->SprintAction)
+            if (PC->SprintAction)
             {
                 // IA_Sprint 액션 키를 "누르고 있는 동안" StartSprint() 호출
-                EnhancedInput->BindAction(
-                    PlayerController->SprintAction,
+                EI->BindAction(
+                    PC->SprintAction,
                     ETriggerEvent::Triggered,
                     this,
                     &AHighScoreCharacter::StartSprint
                 );
                 // IA_Sprint 액션 키에서 "손을 뗀 순간" StopSprint() 호출
-                EnhancedInput->BindAction(
-                    PlayerController->SprintAction,
+                EI->BindAction(
+                    PC->SprintAction,
                     ETriggerEvent::Completed,
                     this,
                     &AHighScoreCharacter::StopSprint
@@ -233,12 +223,9 @@ float AHighScoreCharacter::TakeDamage(
 // 사망 처리 함수
 void AHighScoreCharacter::OnDeath()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("OnDeath() 실행"));
-    AHighScoreGameState* HighScoreGameState = GetWorld() ? GetWorld()->GetGameState<AHighScoreGameState>() : nullptr;
-
-    if (HighScoreGameState)
+    if (AHighScoreGameState * HighScoreGS = GetWorld()->GetGameState<AHighScoreGameState>())
     {
-        HighScoreGameState->OnGameOver();
+        HighScoreGS->OnGameOver();
     }
 }
 
