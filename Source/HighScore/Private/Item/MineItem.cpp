@@ -5,10 +5,11 @@
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h" // DestroyComponent()
+#include "HighScoreGameState.h"
 
 AMineItem::AMineItem()
 {
-    ExplosionDelay = 1.5f;
+    ExplosionDelay = 1.0f;
     ExplosionRadius = 300.0f;
     ExplosionDamage = 30;
     ItemType = "Mine";
@@ -18,6 +19,22 @@ AMineItem::AMineItem()
     ExplosionCollision->InitSphereRadius(ExplosionRadius);
     ExplosionCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
     ExplosionCollision->SetupAttachment(Scene);
+}
+
+void AMineItem::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (AHighScoreGameState* GS = GetWorld()->GetGameState<AHighScoreGameState>())
+    {
+        int32 Level = GS->GetCurrentLevelIndex();
+        ExplosionDelay = FMath::Min(ExplosionDelay, ExplosionDelay - (Level * 0.3f));
+
+        int32 Wave = GS->GetCurrentWaveIndex();
+        ExplosionDamage = FMath::Max(ExplosionDamage, ExplosionDamage + ((Wave - 1) * 5));
+        ExplosionRadius = FMath::Max(ExplosionRadius, ExplosionRadius + ((Wave - 1) * 100));
+        ExplosionCollision->SetSphereRadius(ExplosionRadius);
+    }
 }
 
 void AMineItem::Explode()
@@ -88,14 +105,13 @@ void AMineItem::Explode()
 void AMineItem::ActivateItem(AActor* Activator)
 {
     if (bHasExploded) return;
-
     Super::ActivateItem(Activator);
 
-    // 1.5초 후 폭발 실행
+    // ExplosionDelay초 후 폭발 실행
     GetWorld()->GetTimerManager().SetTimer(
-        ExplosionTimerHandle, 
-        this, 
-        &AMineItem::Explode, 
+        ExplosionTimerHandle,
+        this,
+        &AMineItem::Explode,
         ExplosionDelay
     );
 

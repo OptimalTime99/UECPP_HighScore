@@ -18,10 +18,11 @@ public:
     void Explode();
 
 protected:
+    virtual void BeginPlay() override;
     virtual void ActivateItem(AActor* Activator) override;
     
 private:
-    // 폭발까지 걸리는 시간 (5초)
+    // 폭발까지 걸리는 시간
     UPROPERTY(Category = "Mine", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     float ExplosionDelay;
     // 폭발 범위

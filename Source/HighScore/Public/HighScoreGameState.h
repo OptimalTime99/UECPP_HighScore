@@ -44,6 +44,12 @@ public:
     UFUNCTION(Category = "Level", BlueprintCallable)
     void OnGameOver();
 
+    // 현재 레벨을 반환하는 함수 - MineItem 폭발 시간 조절용
+    int32 GetCurrentLevelIndex() const { return CurrentLevelIndex; };
+
+    // 현재 웨이브를 반환하는 함수 - MineItem 폭발 범위/데미지 조절용
+    int32 GetCurrentWaveIndex() const { return CurrentWaveIndex; };
+
 public:
     UPROPERTY(Category = "Score", VisibleAnyWhere, BlueprintReadWrite)
     int32 Score;
