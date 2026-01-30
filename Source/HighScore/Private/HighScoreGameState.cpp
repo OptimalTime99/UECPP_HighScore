@@ -209,5 +209,6 @@ void AHighScoreGameState::OnGameOver()
         HighScorePC->SetIsExit(false);
         PC->SetIgnoreLookInput(true);
         PC->SetIgnoreMoveInput(true);
+        GetWorldTimerManager().ClearTimer(LevelTimerHandle);
     }
 }
