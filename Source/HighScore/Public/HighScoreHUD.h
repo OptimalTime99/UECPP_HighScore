@@ -38,7 +38,7 @@ public:
     void UpdateMainMenuHUD(bool bIsRestart);
 
     UFUNCTION(Category = "HUD", BlueprintCallable)
-    void UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave);
+    void UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave, int SpawnedCoinCount, int CollectedCoinCount);
 
     UFUNCTION(Category = "HUD", BlueprintCallable)
     void ClearAllWidgets();

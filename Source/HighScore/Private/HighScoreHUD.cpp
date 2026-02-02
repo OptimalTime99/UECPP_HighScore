@@ -93,7 +93,7 @@ void AHighScoreHUD::ClearAllWidgets()
     }
 }
 
-void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave)
+void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave, int SpawnedCoinCount, int CollectedCoinCount)
 {
     if (!GameplayWidgetInstance) return;
 
@@ -118,4 +118,8 @@ void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float Remai
     // 스테이지 업데이트
     if (UTextBlock* LevelText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("Stage"))))
         LevelText->SetText(FText::Format(FText::FromString("STAGE {0}-{1}"), FText::AsNumber(Level), FText::AsNumber(Wave)));
+
+    // 개수 업데이트
+    if (UTextBlock* CoinCountText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("CoinCount"))))
+        CoinCountText->SetText(FText::Format(FText::FromString("Coin            {0} / {1}"), FText::AsNumber(CollectedCoinCount), FText::AsNumber(SpawnedCoinCount)));
 }

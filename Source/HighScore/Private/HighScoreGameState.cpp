@@ -192,7 +192,9 @@ void AHighScoreGameState::UpdateGameplayHUD()
             LevelDuration,
             TotalScore,
             CurrentLevelIndex + 1,
-            CurrentWaveIndex
+            CurrentWaveIndex,
+            SpawnedCoinCount,
+            CollectedCoinCount
         );
     }
 }
