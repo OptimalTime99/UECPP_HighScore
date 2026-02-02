@@ -19,8 +19,9 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
     virtual void ActivateItem(AActor* Activator) override;
-    
+
 private:
     // 폭발까지 걸리는 시간
     UPROPERTY(Category = "Mine", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -46,8 +47,16 @@ private:
     UPROPERTY(Category = "Item|Effects", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<USoundBase> ExplosionSound;
 
-    
+    // 경고 장판 데칼 컴포넌트
+    UPROPERTY(Category = "Item|Component", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<UDecalComponent> WarningDecal;
 
-    
+    UPROPERTY()
+    class UMaterialInstanceDynamic* DynamicWarningMat;
 
+    // 폭발까지 남은 시간을 추적하기 위한 변수
+    float ElapsedTime;
+
+    // 매 프레임 비주얼을 업데이트할 함수
+    void UpdateWarningVisual(float DeltaTime);
 };
