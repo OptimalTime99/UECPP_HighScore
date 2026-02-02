@@ -13,6 +13,8 @@
 AHighScoreCharacter::AHighScoreCharacter()
 {
     PrimaryActorTick.bCanEverTick = false;
+
+    bUseControllerRotationYaw = false;
     
     SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
     SpringArmComp->SetupAttachment(RootComponent);
@@ -36,6 +38,7 @@ AHighScoreCharacter::AHighScoreCharacter()
 
     MaxHealth = 100.0f;
     Health = MaxHealth;
+
 }
 
 void AHighScoreCharacter::BeginPlay()
@@ -125,16 +128,24 @@ void AHighScoreCharacter::Move(const FInputActionValue& value)
     // 예) (X=1, Y=0) → 전진 / (X=-1, Y=0) → 후진 / (X=0, Y=1) → 오른쪽 / (X=0, Y=-1) → 왼쪽
     const FVector2D MoveInput = value.Get<FVector2D>();
 
+    // 컨트롤러의 회전값 중 Yaw(좌우 회전)만 가져옴
+    const FRotator Rotation = Controller->GetControlRotation();
+    const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+    // 컨트롤러 기준 정면과 오른쪽 방향 계산
+    const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+    const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
     if (!FMath::IsNearlyZero(MoveInput.X))
     {
         // 캐릭터가 바라보는 방향(정면)으로 X축 이동
-        AddMovementInput(GetActorForwardVector(), MoveInput.X);
+        AddMovementInput(ForwardDirection, MoveInput.X);
     }
 
     if (!FMath::IsNearlyZero(MoveInput.Y))
     {
         // 캐릭터의 오른쪽 방향으로 Y축 이동
-        AddMovementInput(GetActorRightVector(), MoveInput.Y);
+        AddMovementInput(RightDirection, MoveInput.Y);
     }
 }
 
