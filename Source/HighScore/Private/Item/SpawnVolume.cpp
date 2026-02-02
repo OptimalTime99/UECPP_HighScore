@@ -5,6 +5,8 @@
 #include "Components/BoxComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Maps/MazeGenerator.h"
+#include "Kismet/GameplayStatics.h"
 
 ASpawnVolume::ASpawnVolume()
 {
@@ -18,6 +20,21 @@ ASpawnVolume::ASpawnVolume()
     SpawningBox->SetupAttachment(Scene);
 
     ItemDataTable = nullptr;
+}
+
+FVector ASpawnVolume::GetRandomPointInVolume() const
+{
+    // 1) 박스 컴포넌트의 스케일된 Extent, 즉 x/y/z 방향으로 반지름(절반 길이)을 구함
+    FVector BoxExtent = SpawningBox->GetScaledBoxExtent();
+    // 2) 박스 중심 위치
+    FVector BoxOrigin = SpawningBox->GetComponentLocation();
+
+    // 3) 각 축별로 -Extent ~ +Extent 범위의 무작위 값 생성
+    return BoxOrigin + FVector(
+        FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
+        FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
+        FMath::FRandRange(-BoxExtent.Z, BoxExtent.Z)
+    );
 }
 
 AActor* ASpawnVolume::SpawnRandomItem()
@@ -38,45 +55,52 @@ AActor* ASpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass)
 {
     if (!ItemClass) return nullptr;
 
-    // 1. 박스 범위 내 랜덤한 X, Y 좌표와 가장 높은 Z(천장) 좌표를 가져옵니다.
-    FVector BoxExtent = SpawningBox->GetScaledBoxExtent();
-    FVector BoxOrigin = SpawningBox->GetComponentLocation();
+    // 1. 월드에서 MazeGenerator 찾기
+    AActor* MazeGenActor = UGameplayStatics::GetActorOfClass(GetWorld(), AMazeGenerator::StaticClass());
+    AMazeGenerator* MazeGen = Cast<AMazeGenerator>(MazeGenActor);
 
-    FVector StartLocation = BoxOrigin + FVector(
-        FMath::FRandRange(-BoxExtent.X, BoxExtent.X),
-        FMath::FRandRange(-BoxExtent.Y, BoxExtent.Y),
-        BoxExtent.Z // 박스의 가장 윗부분에서 시작
-    );
+    FVector TargetLocation;
 
-    // 2. 바닥 방향으로 쏠 끝점 (박스의 가장 아랫부분보다 더 아래까지 탐색)
-    FVector EndLocation = StartLocation;
-    EndLocation.Z -= (BoxExtent.Z * 2.0f + 500.0f);
+    if (MazeGen)
+    {
+        // 2. 미로의 길(Cell Center) 목록 중 랜덤 선택
+        TArray<FVector> Locations = MazeGen->GetMazePathLocations();
+        if (Locations.Num() > 0)
+        {
+            TargetLocation = Locations[FMath::RandRange(0, Locations.Num() - 1)];
+        }
+    }
+    else
+    {
+        // 미로 생성기가 없을 경우 대비한 기본 랜덤 위치
+        TargetLocation = GetRandomPointInVolume();
+    }
 
-    // 3. Line Trace 설정
+    // 3. Line Trace로 바닥 높이 정밀 조정
+    // 시작점: 선택된 좌표의 Z를 100으로 설정
+    FVector Start = FVector(TargetLocation.X, TargetLocation.Y, 100.0f);
+    // 끝점: 바닥 아래 충분히 낮은 곳 (-500)
+    FVector End = FVector(TargetLocation.X, TargetLocation.Y, -500.0f);
+
     FHitResult HitResult;
     FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this); // 스폰 볼륨 자신은 무시
+    Params.AddIgnoredActor(this); // 스폰 볼륨 무시
+    if (MazeGen) Params.AddIgnoredActor(MazeGen); // 미로 생성기 무시
 
-    FVector FinalSpawnLocation = StartLocation; // 기본값
+    FVector FinalSpawnLocation = Start; // 기본값
 
-    // 4. Trace 실행 (지면 탐색)
-    if (GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params))
+    // 레이저 발사! (ECC_Visibility 채널 사용)
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
     {
-        // 바닥에 부딪혔다면 그 지점의 위치를 사용
+        // 지면에 닿은 위치 사용
         FinalSpawnLocation = HitResult.Location;
 
-        // [중요] 아이템이 바닥에 파묻히지 않게 약간 띄워줍니다 (Offset)
-        // 아이템의 크기에 따라 10.0f ~ 50.0f 사이로 조절하세요.
+        // [중요] 아이템 절반이 땅에 묻히지 않게 살짝 띄움 (Offset)
         FinalSpawnLocation.Z += 100.0f;
     }
 
-    AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
-        ItemClass,
-        FinalSpawnLocation,
-        FRotator::ZeroRotator
-    );
-
-    return SpawnedActor;
+    // 4. 최종 위치에 스폰
+    return GetWorld()->SpawnActor<AActor>(ItemClass, FinalSpawnLocation, FRotator::ZeroRotator);
 }
 
 FItemSpawnRow* ASpawnVolume::GetRandomItem() const

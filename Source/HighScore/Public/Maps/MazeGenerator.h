@@ -27,6 +27,10 @@ class HIGHSCORE_API AMazeGenerator : public AActor
 public:	
 	AMazeGenerator();
 
+    // 길(Cell)의 중심 좌표들을 반환하는 함수
+    UFUNCTION(BlueprintCallable, Category = "Maze")
+    TArray<FVector> GetMazePathLocations() const;
+
 protected:
 	virtual void BeginPlay() override;
 

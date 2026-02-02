@@ -11,6 +11,23 @@ AMazeGenerator::AMazeGenerator()
 
 }
 
+TArray<FVector> AMazeGenerator::GetMazePathLocations() const
+{
+    TArray<FVector> PathLocations;
+    FVector StartOffset = FVector(-3000.0f, -3000.0f, 0.0f);
+
+    for (int32 x = 0; x < MapWidth; x++)
+    {
+        for (int32 y = 0; y < MapHeight; y++)
+        {
+            // 각 셀의 중심점 계산 (TileSize의 절반인 250을 더함)
+            FVector CellCenter = StartOffset + FVector(x * TileSize + (TileSize * 0.5f), y * TileSize + (TileSize * 0.5f), 50.0f);
+            PathLocations.Add(CellCenter);
+        }
+    }
+    return PathLocations;
+}
+
 void AMazeGenerator::BeginPlay()
 {
 	Super::BeginPlay();
