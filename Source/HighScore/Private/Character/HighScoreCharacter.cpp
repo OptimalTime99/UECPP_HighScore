@@ -29,6 +29,7 @@ AHighScoreCharacter::AHighScoreCharacter()
 
     OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
     OverheadWidget->SetupAttachment(GetMesh());
+    OverheadWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));
     OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
 
     NormalSpeed = 600.0f;
