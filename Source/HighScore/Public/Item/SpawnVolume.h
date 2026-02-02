@@ -20,10 +20,6 @@ public:
     UFUNCTION(Category = "Spawning", BlueprintCallable)
     AActor* SpawnRandomItem();
 
-    // 스폰 볼륨 내부에서 무작위 좌표를 얻어오는 함수
-    UFUNCTION(Category = "Spawning", BlueprintCallable)
-    FVector GetRandomPointInVolume() const;
-
     // 특정 아이템 클래스를 스폰하는 함수
     UFUNCTION(Category = "Spawning", BlueprintCallable)
     AActor* SpawnItem(TSubclassOf<AActor> ItemClass);
