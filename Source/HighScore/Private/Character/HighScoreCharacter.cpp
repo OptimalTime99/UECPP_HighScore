@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HighScoreGameState.h"
+#include "Components/ProgressBar.h"
 
 AHighScoreCharacter::AHighScoreCharacter()
 {
@@ -247,10 +248,9 @@ void AHighScoreCharacter::UpdateOverheadHP()
 
     UUserWidget* OverheadWidgetInstance = OverheadWidget->GetUserWidgetObject();
     if (!OverheadWidgetInstance) return;
-
-    if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverHeadHP"))))
+    if (UProgressBar* HPBar = Cast<UProgressBar>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverheadHP"))))
     {
-        HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
+        HPBar->SetPercent(MaxHealth > 0 ? Health / MaxHealth : 0);
     }
 }
 

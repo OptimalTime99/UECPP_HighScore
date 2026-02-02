@@ -98,11 +98,11 @@ void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float Remai
     if (!GameplayWidgetInstance) return;
 
     // HP 업데이트
-    if (UTextBlock* HPText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("HP"))))
-        HPText->SetText(FText::AsNumber((int32)Health));
+    //if (UTextBlock* HPText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("HP"))))
+    //    HPText->SetText(FText::AsNumber((int32)Health));
 
-    if (UProgressBar* HPBar = Cast<UProgressBar>(GameplayWidgetInstance->GetWidgetFromName(TEXT("PB_HP"))))
-        HPBar->SetPercent(MaxHealth > 0 ? Health / MaxHealth : 0);
+    //if (UProgressBar* HPBar = Cast<UProgressBar>(GameplayWidgetInstance->GetWidgetFromName(TEXT("PB_HP"))))
+    //    HPBar->SetPercent(MaxHealth > 0 ? Health / MaxHealth : 0);
 
     // 시간 업데이트
     if (UTextBlock* TimeText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("Time"))))
