@@ -8,6 +8,7 @@
 #include "Maps/MazeGenerator.h"
 #include "Kismet/GameplayStatics.h"
 #include "Algo/RandomShuffle.h"
+#include "DrawDebugHelpers.h"
 
 ASpawnVolume::ASpawnVolume()
 {
@@ -92,13 +93,19 @@ AActor* ASpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass, const FVector& In
     if (MazeGenActor) Params.AddIgnoredActor(MazeGenActor);
 
     FVector FinalSpawnLocation = InLocation;
+    FColor LineColor = FColor::Red;
 
     if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
     {
         // ImpactPoint(충돌 지점)를 사용하여 정확한 바닥 안착
         FinalSpawnLocation = HitResult.ImpactPoint;
-        FinalSpawnLocation.Z += 100.0f; // 아이템 절반 높이만큼 보정 (값은 아이템에 따라 조절)
+        FinalSpawnLocation.Z += 100.0f; // 아이템 스폰 높이 보정
+        LineColor = FColor::Green;
+
+        DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 15.f, 12, FColor::Cyan, false, 400.f);
     }
+
+    DrawDebugLine(GetWorld(), Start, End, LineColor, false, 400.f, 0, 10.0f);
 
     return GetWorld()->SpawnActor<AActor>(ItemClass, FinalSpawnLocation, FRotator::ZeroRotator);
 }
