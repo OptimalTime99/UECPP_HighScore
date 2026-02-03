@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Item/BaseItem.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 #include "MineItem.generated.h"
 
+class UGameplayEffect;
 
 UCLASS()
 class HIGHSCORE_API AMineItem : public ABaseItem
@@ -22,6 +25,10 @@ protected:
     virtual void Tick(float DeltaTime) override;
     virtual void ActivateItem(AActor* Activator) override;
 
+    // 적용할 데미지 Gameplay Effect 클래스 (에디터에서 GE_Damage 선택)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+    TSubclassOf<UGameplayEffect> DamageEffectClass;
+
 private:
     // 폭발까지 걸리는 시간
     UPROPERTY(Category = "Mine", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -29,9 +36,6 @@ private:
     // 폭발 범위
     UPROPERTY(Category = "Mine", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     float ExplosionRadius;
-    // 폭발 데미지
-    UPROPERTY(Category = "Mine", EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    int ExplosionDamage;
 
     UPROPERTY(Category = "Item|Component", VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<USphereComponent> ExplosionCollision;
@@ -59,4 +63,7 @@ private:
 
     // 매 프레임 비주얼을 업데이트할 함수
     void UpdateWarningVisual(float DeltaTime);
+
+
+
 };

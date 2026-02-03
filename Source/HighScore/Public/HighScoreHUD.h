@@ -41,5 +41,8 @@ public:
     void UpdateGameplayHUD(float Health, float MaxHealth, float RemainingTime, float Duration, int32 Score, int32 Level, int32 Wave, int SpawnedCoinCount, int CollectedCoinCount);
 
     UFUNCTION(Category = "HUD", BlueprintCallable)
+    void UpdateHealth(float NewHealth, float NewMaxHealth);
+
+    UFUNCTION(Category = "HUD", BlueprintCallable)
     void ClearAllWidgets();
 };

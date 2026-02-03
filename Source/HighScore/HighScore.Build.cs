@@ -15,7 +15,10 @@ public class HighScore : ModuleRules
                 "Engine", 
                 "InputCore", 
                 "EnhancedInput",
-                "UMG"
+                "UMG",
+                "GameplayAbilities", 
+                "GameplayTags", 
+                "GameplayTasks"
             }
         );
 

@@ -14,7 +14,6 @@ AMineItem::AMineItem()
 
     ExplosionDelay = 1.0f;
     ExplosionRadius = 300.0f;
-    ExplosionDamage = 30;
     ItemType = "Mine";
     bHasExploded = false;
     ElapsedTime = 0.0f;
@@ -54,7 +53,6 @@ void AMineItem::BeginPlay()
         ExplosionDelay = FMath::Min(ExplosionDelay, ExplosionDelay - (Level * 0.3f));
 
         int32 Wave = GS->GetCurrentWaveIndex();
-        ExplosionDamage = FMath::Max(ExplosionDamage, ExplosionDamage + ((Wave - 1) * 5));
         ExplosionRadius = FMath::Max(ExplosionRadius, ExplosionRadius + ((Wave - 1) * 100));
         ExplosionCollision->SetSphereRadius(ExplosionRadius);
     }
@@ -130,14 +128,40 @@ void AMineItem::Explode()
     {
         if (Actor && Actor->ActorHasTag("Player"))
         {
-            // 데미지를 발생시켜 Actor->TakeDamage()가 실행되도록 함
-            UGameplayStatics::ApplyDamage(
-                Actor,                      // 데미지를 받을 액터
-                ExplosionDamage,            // 데미지 양
-                nullptr,                    // 데미지를 유발한 주체 (지뢰를 설치한 캐릭터가 없으므로 nullptr)
-                this,                       // 데미지를 유발한 오브젝트(지뢰)
-                UDamageType::StaticClass()  // 기본 데미지 유형
-            );
+            // --- [추가 코드: GAS 데미지 적용] ---
+            IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(Actor);
+            if (ASCInterface && DamageEffectClass)
+            {
+                UAbilitySystemComponent* TargetASC = ASCInterface->GetAbilitySystemComponent();
+                if (TargetASC)
+                {
+                    // 스테이지와 웨이브 정보를 조합해 Level 계산 (1~9)
+                    float EffectLevel = 1.0f;
+                    if (AHighScoreGameState* GS = GetWorld()->GetGameState<AHighScoreGameState>())
+                    {
+                        EffectLevel = static_cast<float>(GS->GetCurrentLevelIndex() * 3 + GS->GetCurrentWaveIndex());
+                        UE_LOG(LogTemp, Warning, TEXT("Mine Explode! Level: %f"), EffectLevel);
+                    }
+
+                    FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
+                    ContextHandle.AddInstigator(this, this);
+
+                    FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(DamageEffectClass, EffectLevel, ContextHandle);
+                    if (SpecHandle.IsValid())
+                    {
+                        TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+                    }
+                }
+            }
+
+            //// 데미지를 발생시켜 Actor->TakeDamage()가 실행되도록 함
+            //UGameplayStatics::ApplyDamage(
+            //    Actor,                      // 데미지를 받을 액터
+            //    ExplosionDamage,            // 데미지 양
+            //    nullptr,                    // 데미지를 유발한 주체 (지뢰를 설치한 캐릭터가 없으므로 nullptr)
+            //    this,                       // 데미지를 유발한 오브젝트(지뢰)
+            //    UDamageType::StaticClass()  // 기본 데미지 유형
+            //);
         }
     }
 

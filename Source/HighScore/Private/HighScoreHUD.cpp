@@ -97,13 +97,6 @@ void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float Remai
 {
     if (!GameplayWidgetInstance) return;
 
-    // HP 업데이트
-    //if (UTextBlock* HPText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("HP"))))
-    //    HPText->SetText(FText::AsNumber((int32)Health));
-
-    //if (UProgressBar* HPBar = Cast<UProgressBar>(GameplayWidgetInstance->GetWidgetFromName(TEXT("PB_HP"))))
-    //    HPBar->SetPercent(MaxHealth > 0 ? Health / MaxHealth : 0);
-
     // 시간 업데이트
     if (UTextBlock* TimeText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("Time"))))
         TimeText->SetText(FText::Format(FText::FromString("{0}"), FText::AsNumber(FMath::Max(RemainingTime, 0.0f), &FNumberFormattingOptions().SetMaximumFractionalDigits(1))));
@@ -122,4 +115,15 @@ void AHighScoreHUD::UpdateGameplayHUD(float Health, float MaxHealth, float Remai
     // 개수 업데이트
     if (UTextBlock* CoinCountText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("CoinCount"))))
         CoinCountText->SetText(FText::Format(FText::FromString("Coin            {0} / {1}"), FText::AsNumber(CollectedCoinCount), FText::AsNumber(SpawnedCoinCount)));
+}
+
+void AHighScoreHUD::UpdateHealth(float NewHealth, float NewMaxHealth)
+{
+    if (!GameplayWidgetInstance) return;
+
+    if (UProgressBar* HPBar = Cast<UProgressBar>(GameplayWidgetInstance->GetWidgetFromName(TEXT("PB_HP"))))
+        HPBar->SetPercent(NewMaxHealth > 0 ? NewHealth / NewMaxHealth : 0);
+
+    if (UTextBlock* HPText = Cast<UTextBlock>(GameplayWidgetInstance->GetWidgetFromName(TEXT("HP"))))
+        HPText->SetText(FText::AsNumber((int32)NewHealth));
 }

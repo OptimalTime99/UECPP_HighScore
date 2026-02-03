@@ -10,6 +10,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "HighScoreGameState.h"
 #include "Components/ProgressBar.h"
+#include "GAS/HighScoreAttributeSet.h"
+#include "HighScoreHUD.h"
 
 AHighScoreCharacter::AHighScoreCharacter()
 {
@@ -32,21 +34,73 @@ AHighScoreCharacter::AHighScoreCharacter()
     OverheadWidget->SetupAttachment(GetMesh());
     OverheadWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));
     OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+    
+    // 1. ASC 생성
+    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 
-    NormalSpeed = 600.0f;
-    SprintSpeedMultiplier = 1.5f;
-    SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
-    GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+    // 복제(Replication) 설정 (멀티플레이 고려 시 필수)
+    AbilitySystemComponent->SetIsReplicated(true);
+    AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-    MaxHealth = 100.0f;
-    Health = MaxHealth;
+    // 2. AttributeSet 생성 (ASC가 생성된 후 생성해야 함)
+    AttributeSet = CreateDefaultSubobject<UHighScoreAttributeSet>(TEXT("AttributeSet"));
+}
 
+void AHighScoreCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+
+    // 서버에서 InitAbilityActorInfo 호출
+    if (AbilitySystemComponent)
+    {
+        AbilitySystemComponent->InitAbilityActorInfo(this, this);
+    }
+}
+
+UAbilitySystemComponent* AHighScoreCharacter::GetAbilitySystemComponent() const
+{
+    return AbilitySystemComponent;
+}
+
+void AHighScoreCharacter::BindAttributeCallbacks()
+{
+    if (AttributeSet)
+    {
+        // AttributeSet의 OnDeath 델리게이트에 캐릭터의 OnDeath 함수 연결
+        AttributeSet->OnDeath.AddLambda([this](AActor* Killer)
+            {
+                this->OnDeath();
+            });
+    }
+}
+
+int32 AHighScoreCharacter::GetHealth() const
+{
+    // AttributeSet이 유효하면 그 값을, 아니면 0을 반환
+    return AttributeSet ? static_cast<int32>(AttributeSet->GetHealth()) : 0;
+}
+
+int32 AHighScoreCharacter::GetMaxHealth() const
+{
+    return AttributeSet ? static_cast<int32>(AttributeSet->GetMaxHealth()) : 0;
 }
 
 void AHighScoreCharacter::BeginPlay()
 {
     Super::BeginPlay();
     UpdateOverheadHP();
+
+    if (AbilitySystemComponent && AttributeSet)
+    {
+        // Health가 변할 때마다 호출될 콜백 등록
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
+            .AddUObject(this, &AHighScoreCharacter::OnHealthChanged);
+
+        AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxHealthAttribute())
+            .AddUObject(this, &AHighScoreCharacter::OnHealthChanged);
+    }
+
+    BindAttributeCallbacks();
 }
 
 void AHighScoreCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -128,7 +182,13 @@ void AHighScoreCharacter::Move(const FInputActionValue& value)
 
     // Value는 Axis2D로 설정된 IA_Move의 입력값 (WASD)을 담고 있음
     // 예) (X=1, Y=0) → 전진 / (X=-1, Y=0) → 후진 / (X=0, Y=1) → 오른쪽 / (X=0, Y=-1) → 왼쪽
-    const FVector2D MoveInput = value.Get<FVector2D>();
+    FVector2D MoveInput = value.Get<FVector2D>();
+
+    if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Debuff.InvertControl"))))
+    {
+        // 입력값(X, Y)에 -1을 곱해 전후좌우를 모두 뒤집습니다.
+        MoveInput *= -1.0f;
+    }
 
     // 컨트롤러의 회전값 중 Yaw(좌우 회전)만 가져옴
     const FRotator Rotation = Controller->GetControlRotation();
@@ -183,54 +243,36 @@ void AHighScoreCharacter::Look(const FInputActionValue& value)
 
 void AHighScoreCharacter::StartSprint(const FInputActionValue& value)
 {
-    // Shift 키를 누른 순간 이 함수가 호출된다고 가정
-    // 스프린트 속도를 적용
-    if (GetCharacterMovement())
+    if (!AbilitySystemComponent || !SprintEffectClass) return;
+
+    // 1. 슬로우 상태인지 체크 (기존 로직 유지)
+    if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Debuff.Slow"))))
     {
-        GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+        return;
+    }
+
+    // 2. 이미 스프린트 중이라면 중복 적용 방지
+    if (SprintEffectHandle.IsValid()) return;
+
+    // 3. GE_Sprint 적용
+    FGameplayEffectContextHandle ContextHandle = AbilitySystemComponent->MakeEffectContext();
+    ContextHandle.AddInstigator(this, this);
+
+    FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(SprintEffectClass, 1.0f, ContextHandle);
+    if (SpecHandle.IsValid())
+    {
+        // Infinite 정책을 가진 GE를 적용하고 핸들을 저장합니다.
+        SprintEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
     }
 }
 
 void AHighScoreCharacter::StopSprint(const FInputActionValue& value)
 {
-    // Shift 키를 뗀 순간 이 함수가 호출
-    // 평상시 속도로 복귀
-    if (GetCharacterMovement())
-    {
-        GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
-    }
-}
+    if (!AbilitySystemComponent || !SprintEffectHandle.IsValid()) return;
 
-// 체력 회복 함수
-void AHighScoreCharacter::AddHealth(float Amount)
-{
-    // 체력을 회복시킴. 최대 체력을 초과하지 않도록 제한함
-    Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
-    UpdateOverheadHP();
-}
-
-// 데미지 처리 함수
-float AHighScoreCharacter::TakeDamage(
-    float DamageAmount,
-    FDamageEvent const& DamageEvent,
-    AController* EventInstigator,
-    AActor* DamageCauser)
-{
-    // 기본 데미지 처리 로직 호출 (필수는 아님)
-    float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-    // 체력을 데미지만큼 감소시키고, 0 이하로 떨어지지 않도록 Clamp
-    Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
-    UpdateOverheadHP();
-
-    // 체력이 0 이하가 되면 사망 처리
-    if (Health <= 0.0f)
-    {
-        OnDeath();
-    }
-
-    // 실제 적용된 데미지를 반환
-    return ActualDamage;
+    // 4. 저장해둔 핸들을 사용하여 스프린트 GE 제거
+    AbilitySystemComponent->RemoveActiveGameplayEffect(SprintEffectHandle);
+    SprintEffectHandle.Invalidate(); // 핸들 초기화
 }
 
 // 사망 처리 함수
@@ -244,13 +286,32 @@ void AHighScoreCharacter::OnDeath()
 
 void AHighScoreCharacter::UpdateOverheadHP()
 {
-    if (!OverheadWidget) return;
+    if (!OverheadWidget || !AttributeSet) return;
 
     UUserWidget* OverheadWidgetInstance = OverheadWidget->GetUserWidgetObject();
     if (!OverheadWidgetInstance) return;
+
     if (UProgressBar* HPBar = Cast<UProgressBar>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverheadHP"))))
     {
-        HPBar->SetPercent(MaxHealth > 0 ? Health / MaxHealth : 0);
+        // 이제 캐릭터의 변수가 아닌 AttributeSet의 값을 사용합니다.
+        const float HPPercent = AttributeSet->GetMaxHealth() > 0 ? AttributeSet->GetHealth() / AttributeSet->GetMaxHealth() : 0.0f;
+        HPBar->SetPercent(HPPercent);
+    }
+}
+
+void AHighScoreCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    // 1. 머리 위 HP 바 갱신
+    UpdateOverheadHP();
+
+    // 2. 메인 HUD 갱신
+    if (AHighScorePlayerController* PC = Cast<AHighScorePlayerController>(GetController()))
+    {
+        if (AHighScoreHUD* HUD = Cast<AHighScoreHUD>(PC->GetHUD()))
+        {
+            // 체력만 쏙 바꿉니다. 점수나 시간은 건드리지 않아요!
+            HUD->UpdateHealth(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
+        }
     }
 }
 

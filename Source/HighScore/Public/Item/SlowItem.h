@@ -1,27 +1,23 @@
 ﻿// Copyright (c) 2026 Junhyeok Choi. All rights reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Item/BaseItem.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
-#include "HealingItem.generated.h"
+#include "SlowItem.generated.h"
 
 class UGameplayEffect;
 
 UCLASS()
-class HIGHSCORE_API AHealingItem : public ABaseItem
+class HIGHSCORE_API ASlowItem : public ABaseItem
 {
     GENERATED_BODY()
-    
+
 public:
-    AHealingItem();
+    ASlowItem();
 
 protected:
     virtual void ActivateItem(AActor* Activator) override;
 
-    // 적용할 Gameplay Effect 클래스 (에디터에서 GE_Heal 선택)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-    TSubclassOf<UGameplayEffect> HealingEffectClass;
+    TSubclassOf<UGameplayEffect> SlowEffectClass;
 };
