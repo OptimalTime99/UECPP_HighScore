@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Maps/MazeGenerator.h"
 #include "Kismet/GameplayStatics.h"
+#include "Algo/RandomShuffle.h"
 
 ASpawnVolume::ASpawnVolume()
 {
@@ -37,69 +38,68 @@ FVector ASpawnVolume::GetRandomPointInVolume() const
     );
 }
 
-AActor* ASpawnVolume::SpawnRandomItem()
+// [신규 구현] 중복 없는 일괄 스폰 함수
+TArray<AActor*> ASpawnVolume::SpawnMultipleItems(int32 Count)
 {
-    if (FItemSpawnRow* SelectedRow = GetRandomItem())
+    TArray<AActor*> SpawnedActors; // 스폰된 액터들을 담을 배열
+    if (Count <= 0) return SpawnedActors;
+
+    AActor* MazeGenActor = UGameplayStatics::GetActorOfClass(GetWorld(), AMazeGenerator::StaticClass());
+    AMazeGenerator* MazeGen = Cast<AMazeGenerator>(MazeGenActor);
+    if (!MazeGen) return SpawnedActors;
+
+    TArray<FVector> Locations = MazeGen->GetMazePathLocations();
+    if (Locations.IsEmpty()) return SpawnedActors;
+
+    Algo::RandomShuffle(Locations);
+
+    int32 ActualSpawnCount = FMath::Min(Count, Locations.Num());
+
+    for (int32 i = 0; i < ActualSpawnCount; i++)
     {
-        if (UClass* ActualClass = SelectedRow->ItemClass.Get())
+        if (FItemSpawnRow* SelectedRow = GetRandomItem())
         {
-            // 여기서 SpawnItem()을 호출하고, 스폰된 AActor 포인터를 리턴
-            return SpawnItem(ActualClass);
+            if (UClass* ActualClass = SelectedRow->ItemClass.Get())
+            {
+                // 생성된 액터를 배열에 추가
+                AActor* NewItem = SpawnItem(ActualClass, Locations[i]);
+                if (NewItem)
+                {
+                    SpawnedActors.Add(NewItem);
+                }
+            }
         }
     }
 
-    return nullptr;
+    return SpawnedActors; // 생성된 모든 아이템 리스트 반환
 }
 
-AActor* ASpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass)
+// [수정] 특정 위치를 받아서 물리 보정 후 스폰만 수행하는 함수
+AActor* ASpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass, const FVector& InLocation)
 {
     if (!ItemClass) return nullptr;
 
-    // 1. 월드에서 MazeGenerator 찾기
-    AActor* MazeGenActor = UGameplayStatics::GetActorOfClass(GetWorld(), AMazeGenerator::StaticClass());
-    AMazeGenerator* MazeGen = Cast<AMazeGenerator>(MazeGenActor);
-
-    FVector TargetLocation;
-
-    if (MazeGen)
-    {
-        // 2. 미로의 길(Cell Center) 목록 중 랜덤 선택
-        TArray<FVector> Locations = MazeGen->GetMazePathLocations();
-        if (Locations.Num() > 0)
-        {
-            TargetLocation = Locations[FMath::RandRange(0, Locations.Num() - 1)];
-        }
-    }
-    else
-    {
-        // 미로 생성기가 없을 경우 대비한 기본 랜덤 위치
-        TargetLocation = GetRandomPointInVolume();
-    }
-
-    // 3. Line Trace로 바닥 높이 정밀 조정
-    // 시작점: 선택된 좌표의 Z를 100으로 설정
-    FVector Start = FVector(TargetLocation.X, TargetLocation.Y, 100.0f);
-    // 끝점: 바닥 아래 충분히 낮은 곳 (-500)
-    FVector End = FVector(TargetLocation.X, TargetLocation.Y, -500.0f);
+    // 1. Line Trace를 통한 바닥 정밀 감지 (기존 로직 유지 및 최적화)
+    FVector Start = FVector(InLocation.X, InLocation.Y, 500.0f); // 시작 높이를 조금 더 확보
+    FVector End = FVector(InLocation.X, InLocation.Y, -500.0f);
 
     FHitResult HitResult;
     FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this); // 스폰 볼륨 무시
-    if (MazeGen) Params.AddIgnoredActor(MazeGen); // 미로 생성기 무시
+    Params.AddIgnoredActor(this);
 
-    FVector FinalSpawnLocation = Start; // 기본값
+    // 월드에서 MazeGenerator를 다시 찾지 않고, 필요한 경우만 무시 설정
+    AActor* MazeGenActor = UGameplayStatics::GetActorOfClass(GetWorld(), AMazeGenerator::StaticClass());
+    if (MazeGenActor) Params.AddIgnoredActor(MazeGenActor);
 
-    // 레이저 발사! (ECC_Visibility 채널 사용)
+    FVector FinalSpawnLocation = InLocation;
+
     if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
     {
-        // 지면에 닿은 위치 사용
-        FinalSpawnLocation = HitResult.Location;
-
-        // [중요] 아이템 절반이 땅에 묻히지 않게 살짝 띄움 (Offset)
-        FinalSpawnLocation.Z += 100.0f;
+        // ImpactPoint(충돌 지점)를 사용하여 정확한 바닥 안착
+        FinalSpawnLocation = HitResult.ImpactPoint;
+        FinalSpawnLocation.Z += 100.0f; // 아이템 절반 높이만큼 보정 (값은 아이템에 따라 조절)
     }
 
-    // 4. 최종 위치에 스폰
     return GetWorld()->SpawnActor<AActor>(ItemClass, FinalSpawnLocation, FRotator::ZeroRotator);
 }
 

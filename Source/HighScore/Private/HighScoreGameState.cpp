@@ -92,10 +92,13 @@ void AHighScoreGameState::StartWave()
     {
         if (ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]))
         {
-            for (int32 i = 0; i < CurrentWaveItemCount; i++)
+            // [수정 핵심] 루프 스폰을 제거하고 배치 스폰 함수 한 번만 호출
+            TArray<AActor*> SpawnedItems = SpawnVolume->SpawnMultipleItems(CurrentWaveItemCount);
+
+            // 생성된 아이템 중 코인이 몇 개인지만 체크
+            for (AActor* Item : SpawnedItems)
             {
-                AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
-                if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass()))
+                if (Item && Item->IsA(ACoinItem::StaticClass()))
                 {
                     SpawnedCoinCount++;
                 }
