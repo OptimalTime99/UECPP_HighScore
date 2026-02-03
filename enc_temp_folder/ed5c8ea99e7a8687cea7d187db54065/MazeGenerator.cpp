@@ -98,7 +98,7 @@ void AMazeGenerator::ExecuteGenerationStep()
         FVector StartPos = StartOffset + FVector(Current->X * TileSize + (TileSize * 0.5f), Current->Y * TileSize + (TileSize * 0.5f), 100.0f);
         FVector EndPos = StartOffset + FVector(NextX * TileSize + (TileSize * 0.5f), NextY * TileSize + (TileSize * 0.5f), 100.0f);
 
-        DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Red, false, 200.0f, 0, 40.0f);
+        DrawDebugLine(GetWorld(), StartPos, EndPos, FColor::Red, false, 5.0f, 0, 10.0f);
 
         // 7. 다음 셀 방문 처리 및 스택에 추가
         Grid[NextX][NextY].bVisited = true;

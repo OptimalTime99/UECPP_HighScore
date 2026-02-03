@@ -55,4 +55,10 @@ private:
     void GenerateMaze(int32 StartX, int32 StartY);
     void SpawnMazeWalls();
 
+    // 스택을 멤버 변수로 승격하여 함수 호출 간 상태 유지
+    TArray<FMazeCell*> GenerationStack;
+    FTimerHandle GenerationTimerHandle;
+
+    // 한 단계를 실행할 함수
+    void ExecuteGenerationStep();
 };
